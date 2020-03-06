@@ -12,25 +12,22 @@ pollutantmean <- function (directory, pollutant, id = 1:332){
   # Setting Working directory
   setwd("/cloud/project")
   setwd(directory)
-  # Reading file list
-  fnames <- list.files()
+  # Reading file list based on indexes
+  fnames <- list.files()[id]
   csv <- lapply(fnames, read.csv)
   # binding result into a dataframe
   result <- do.call(rbind, csv)
-  # removing NA
-  result <- na.omit(result)
-  pollutantmean <- 0
-    
-  # extracting lines equal to specific id
-  df_calc <- result[which((result$ID >= min(id)) & (result$ID <= max(id))),]
 
-  if (pollutant == "sulfate"){
-    pollutantmean <- mean(df_calc[,"sulfate"])
+  pollutantmean <- 0
+
+  # Performing calculation
+    if (pollutant == "sulfate"){
+    pollutantmean <- mean(result[!is.na(result[,"sulfate"]),"sulfate"])
     }
-  if (pollutant == "nitrate"){
-    pollutantmean <- mean(df_calc[,"nitrate"])
+  else if (pollutant == "nitrate"){
+    pollutantmean <- mean(result[!is.na(result[,"nitrate"]),"nitrate"])
   }
-  # displayong result
+  # displaying result
   pollutantmean
 }
   
