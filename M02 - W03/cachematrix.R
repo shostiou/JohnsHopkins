@@ -1,7 +1,8 @@
-## Put comments here that give an overall description of what your
-## functions do
+## Johns Hopkins - Coursera R Programming
+## Week 03 - Stephane's Assignment
 
-## Write a short comment describing this function
+## This function is used prepare an object which will
+## be used to check if inverve was already calculated
 
 makeCacheMatrix <- function(x = matrix())
 {
@@ -19,16 +20,20 @@ makeCacheMatrix <- function(x = matrix())
         getinv = getinv)
 }
 
-## Write a short comment describing this function
+## This function determines if an inversion was already
+## done for a specific Matrix predefined with the previsou function
+## "makeCacheMatrix"
 
 cacheSolve <- function(x, ...) {
   ## Return a matrix that is the inverse of 'x'
   m_inv <- x$getinv()
+  ## if not NULL => reading matrix inverse stored in cache
   if(!is.null(m_inv)) 
   {
     message("getting cached data")
     return(m_inv)
   }
+  ## Otherwise, calculating Matrix inverse and store it in cache
   data <- x$get()
   m_inv <- solve(data, ...)
   x$setinv(m_inv)
