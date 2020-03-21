@@ -10,7 +10,7 @@
 ## of  the  hospital  that  has  the  best  (i.e.   lowest)  30-day  mortality  for  the  specified  outcomein that state. 
 ## The hospital name is the name provided in theHospital.Namevariable.
 ## The outcomes canbe one of “heart attack”, “heart failure”, or “pneumonia”
-## Hospitals that do not have data on a particularoutcome should be excluded from the set of hospitals when deciding the rankings.
+## Hospitals that do not have data on a namesparticularoutcome should be excluded from the set of hospitals when deciding the rankings.
 ## If there is a tie for the best hospital for a given outcome, then the hospital names shouldbe sorted in alphabetical order and 
 ## the first hospital in that set should be chose
 
@@ -71,11 +71,15 @@ best <- function (state, outcome)
   colnames(my_df)[3] <- "Mortality_Outcome"
   ## Dropping Not Available data
   my_df <- subset(my_df, Mortality_Outcome != "Not Available")
-
   ## Finding the minimum Mortality for the outcome
-  my_result <- subset(my_df, Mortality_Outcome == min(Mortality_Outcome))
+  ## The Mortality is coded in character, the column needs to be converted to numeric
+  ## so that the min function can be applied
+  my_df$Mortality_Outcome <- as.numeric(my_df$Mortality_Outcome)
+  min_mort = min(my_df$Mortality_Outcome)
+  ## Finding the best hospitals
+  my_result <- subset(my_df, Mortality_Outcome == min_mort)
   ## Sort result by ascending order
-  my_result <- my_result[order(my_result$Mortality_Outcome,my_result$Hospital.Name),]
+  my_result <- my_result[order(my_result$Hospital.Name),]
+  ## Printing The best hospital name
   print(my_result[1,1])
-
   }
