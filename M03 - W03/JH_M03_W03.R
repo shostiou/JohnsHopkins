@@ -91,5 +91,28 @@ download.file(fileUrl, destfile="./data/GDP.csv", method = "curl")
 fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2FEDSTATS_Country.csv"
 download.file(fileUrl, destfile="./data/edu.csv", method = "curl")
 
+## Reading downloaded data
+GDPData <- read.csv("./data/GDP.csv", sep =",", header=TRUE)
+EduData <- read.csv("./data/edu.csv", sep =",", header=TRUE)
 
+## The GDP Data needs to be cleaned up
+## Data only starts at the 6th row and columns don't all have a proper name
+## Lets' affect a proper name
+## Column 1 => CountryCode
+## Column 2 => Ranking
+## Column 3 => Short.Name
+## Column 4 => GDP_2012
+## Data stops at line 195 - comments are placed starting at line 237 + Global calculations.
+GDPData <- read.csv("./data/GDP.csv", sep =",", header=FALSE, , nrow = 190, skip = 5, skipNul = TRUE)
+## Suppressing useless columns
+GDPData <- GDPData[,c(1:2,4:5)]
+names(GDPData) <- c("CountryCode","Ranking","Short.Name","GDP_2012")
+## Suppressing Thousans separators
+GDPData$GDP_2012 <- unlist(lapply(GDPData$GDP_2012, function(x) as.numeric(gsub("\\,", "", as.character(x)))))
+
+## Lets' merge data now that it is cleaned
+intersect(names(GDPData),names(EduData))
+MergedData <- merge(GDPData,EduData, by.x="CountryCode", by.y="CountryCode",all=TRUE)
+## Sorting by GDP Rank Descending
+MergedData[order(MergedData$GDP_2012, decreasing = TRUE),]
 
