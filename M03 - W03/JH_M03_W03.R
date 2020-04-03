@@ -95,6 +95,13 @@ download.file(fileUrl, destfile="./data/edu.csv", method = "curl")
 GDPData <- read.csv("./data/GDP.csv", sep =",", header=TRUE)
 EduData <- read.csv("./data/edu.csv", sep =",", header=TRUE)
 
+
+## The Educational Data needs to be cleaned up
+## Let's suppress rows which aren't countries (ie. "World") by removing rows 
+## not having any "Currency Unit" specified (blank value not NA)
+EduData <- EduData[(!(EduData$Currency.Unit=="")),]
+write.csv(EduData,"./data/EduData.csv")
+
 ## The GDP Data needs to be cleaned up
 ## Data only starts at the 6th row and columns don't all have a proper name
 ## Lets' affect a proper name
@@ -107,12 +114,18 @@ GDPData <- read.csv("./data/GDP.csv", sep =",", header=FALSE, , nrow = 190, skip
 ## Suppressing useless columns
 GDPData <- GDPData[,c(1:2,4:5)]
 names(GDPData) <- c("CountryCode","Ranking","Short.Name","GDP_2012")
-## Suppressing Thousans separators
+## Suppressing Thousands separators
 GDPData$GDP_2012 <- unlist(lapply(GDPData$GDP_2012, function(x) as.numeric(gsub("\\,", "", as.character(x)))))
+## Writing CSV file
+write.csv(GDPData,"./data/GDPData.csv")
 
 ## Lets' merge data now that it is cleaned
 intersect(names(GDPData),names(EduData))
-MergedData <- merge(GDPData,EduData, by.x="CountryCode", by.y="CountryCode",all=TRUE)
+## Note that all countries don't have a rank
+MergedData <- merge(GDPData,EduData, by.x="CountryCode", by.y="CountryCode",all=FALSE)
 ## Sorting by GDP Rank Descending
-MergedData[order(MergedData$GDP_2012, decreasing = TRUE),]
-
+Merged_Ordered <- MergedData[order(MergedData$GDP_2012, decreasing = TRUE),]
+## Writing CSV file
+write.csv(Merged_Ordered,"./data/GMerged_Ordered.csv")
+## Checking the number of rows
+nrow(Merged_Ordered)
