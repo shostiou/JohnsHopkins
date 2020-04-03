@@ -129,3 +129,36 @@ Merged_Ordered <- MergedData[order(MergedData$GDP_2012, decreasing = TRUE),]
 write.csv(Merged_Ordered,"./data/GMerged_Ordered.csv")
 ## Checking the number of rows
 nrow(Merged_Ordered)
+
+
+## QUESTION 4 - What is the average GDP ranking for the "High income: OECD" and "High income: nonOECD" group? 
+## ------------------------------------------
+## Checking Income groups
+unique(Merged_Ordered$Income.Group)
+
+## installing the the plyr package
+library(dplyr)
+## Creating a summary of the Income Groups
+Income_DF <- group_by(Merged_Ordered,Income.Group)
+## Summarizing the result according to the Income Groups.
+Income_DF_summary <- summarise(Income_DF, mean_GDP = mean(Ranking))
+## Result : High income: nonOECD     91.9 / High income: OECD        33.0
+
+
+## QUESTION 5 - Cut the GDP ranking into 5 separate quantile groups. 
+## Make a table versus Income.Group. 
+## How many countries are Lower middle income but among the 38 nations with highest GDP?
+## ------------------------------------------
+## Defining the 5 quantile groups
+## Calling the Hmisc library
+library(Hmisc)
+## Creating the quantile groups
+Merged_Ordered$Q_groups <- cut2(Merged_Ordered$Ranking,g=5)
+## Building table
+table(Merged_Ordered$Income.Group,Merged_Ordered$Q_groups )
+
+
+
+
+
+
