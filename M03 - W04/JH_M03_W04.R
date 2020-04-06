@@ -3,7 +3,7 @@
 ## Quiz
 
 ## Setting Working Directory
-setwd("/cloud/project/M03 - W03")
+setwd("/cloud/project/M03 - W04")
 
 ## Preparing a directory to store data
 if (!file.exists("data"))
@@ -78,5 +78,20 @@ names(GDPData) <- c("CountryCode","Ranking","Short.Name","GDP_2012")
 GDPData$GDP_2012 <- unlist(lapply(GDPData$GDP_2012, function(x) as.numeric(gsub("\\,", "", as.character(x)))))
 ## Averaging the values of GDP
 mean(GDPData$GDP_2012)
+
+
+## QUESTION 3 - MANIPULATING TEXT
+## ------------------------------------------
+## In the data set from Question 2 what is a regular expression that would allow you to count the number of 
+## countries whose name begins with "United"? Assume that the variable with the country names in it is 
+## named countryNames. How many countries begin with United? 
+countryNames <- GDPData$Short.Name
+countryNames <- as.character(countryNames)
+
+## Answering the question
+grep("^United",countryNames)
+## 3 countries beginning with United
+## [1] "United States"        "United Kingdom"       "United Arab Emirates"
+
 
 
