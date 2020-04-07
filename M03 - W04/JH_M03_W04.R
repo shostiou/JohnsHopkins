@@ -94,4 +94,94 @@ grep("^United",countryNames)
 ## [1] "United States"        "United Kingdom"       "United Arab Emirates"
 
 
+## QUESTION 4 - MANIPULATING TEXT
+## ------------------------------------------
+## Load the Gross Domestic Product data for the 190 ranked countries in this data set:
+## https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2FGDP.csv
+## Load the educational data from this data set:
+## https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2FEDSTATS_Country.csv
+## Match the data based on the country shortcode. 
+
+## Of the countries for which the end of the fiscal year is available, how many end in June? 
+
+## Downloading the Gross Domestic Product file
+fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2FGDP.csv"
+download.file(fileUrl, destfile="./data/GDP.csv", method = "curl")
+
+## Downloading the educational data file
+fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2FEDSTATS_Country.csv"
+download.file(fileUrl, destfile="./data/edu.csv", method = "curl")
+
+## Reading downloaded data
+GDPData <- read.csv("./data/GDP.csv", sep =",", header=TRUE)
+EduData <- read.csv("./data/edu.csv", sep =",", header=TRUE)
+
+
+## The Educational Data needs to be cleaned up
+## Let's suppress rows which aren't countries (ie. "World") by removing rows 
+## not having any "Currency Unit" specified (blank value not NA)
+EduData <- EduData[(!(EduData$Currency.Unit=="")),]
+write.csv(EduData,"./data/EduData.csv")
+
+## The GDP Data needs to be cleaned up
+## Data only starts at the 6th row and columns don't all have a proper name
+## Lets' affect a proper name
+## Column 1 => CountryCode
+## Column 2 => Ranking
+## Column 3 => Short.Name
+## Column 4 => GDP_2012
+## Data stops at line 195 - comments are placed starting at line 237 + Global calculations.
+GDPData <- read.csv("./data/GDP.csv", sep =",", header=FALSE, , nrow = 190, skip = 5, skipNul = TRUE)
+## Suppressing useless columns
+GDPData <- GDPData[,c(1:2,4:5)]
+names(GDPData) <- c("CountryCode","Ranking","Short.Name","GDP_2012")
+## Suppressing Thousands separators
+GDPData$GDP_2012 <- unlist(lapply(GDPData$GDP_2012, function(x) as.numeric(gsub("\\,", "", as.character(x)))))
+## Writing CSV file
+write.csv(GDPData,"./data/GDPData.csv")
+
+## Lets' merge data now that it is cleaned
+intersect(names(GDPData),names(EduData))
+## Note that all countries don't have a rank
+MergedData <- merge(GDPData,EduData, by.x="CountryCode", by.y="CountryCode",all=FALSE)
+## Sorting by GDP Rank Descending
+Merged_Ordered <- MergedData[order(MergedData$GDP_2012, decreasing = TRUE),]
+## Writing CSV file
+write.csv(Merged_Ordered,"./data/GMerged_Ordered.csv")
+
+## The Fiscal year end is specified in the column "Special.Notes"
+Fiscal_info <- Merged_Ordered$Special.Notes
+## Looking for "Fiscal year end: June" 
+Fiscal_info_June <- grep("Fiscal year end: June",Fiscal_info)
+length(Fiscal_info_June)
+## 13 countries.
+
+
+## QUESTION 5 - Getting Stocks Prices
+## ------------------------------------
+## You can use the quantmod (http://www.quantmod.com/) package to get historical stock prices for publicly
+## traded companies on the NASDAQ and NYSE. Use the following code to download data on Amazon's stock 
+## price and get the times the data was sampled.
+
+## How many values were collected in 2012? How many values were collected on Mondays in 2012?
+
+library(quantmod)
+amzn = getSymbols("AMZN",auto.assign=FALSE)
+sampleTimes = index(amzn)
+
+# Checking that sample Times are stored in Date Format
+class(sampleTimes[1])
+
+# Checking samples recorded in 2012
+library(lubridate)
+sampleTimesYear <- year(sampleTimes)
+sample2012 <- sampleTimesYear[sampleTimesYear == 2012]
+length(sample2012)
+# 250 observations
+# Now Looking for Mondays in 2012
+sampleTimesM2012 <- sampleTimes[(weekdays(sampleTimes) == "Monday") & year(sampleTimes) == 2012 ]
+length(sampleTimesM2012)
+# 47 observations of Mondays in 2012
+
+
 
