@@ -78,4 +78,9 @@ y_train_set <- read.table("./data/UCI HAR Dataset/train/y_train.txt", sep ="", h
 y_test_set <- read.table("./data/UCI HAR Dataset/test/y_test.txt", sep ="", header=FALSE)
 ## Creating a new data frame merging test and train data
 y_data_set <- rbind(y_train_set, y_test_set)
-
+## Loading activity Labels from file
+y_act_label <- read.table("./data/UCI HAR Dataset/activity_labels.txt", sep ="", header=FALSE)
+## Renaming col names
+colnames(y_act_label) <- c("act_ind","act_label")
+## Assigning activity label
+y_data_set$act_label <- y_act_label$act_label[y_data_set$V1]
