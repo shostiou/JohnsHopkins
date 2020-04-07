@@ -56,7 +56,20 @@ train_set <- read.table("./data/UCI HAR Dataset/train/X_train.txt", sep ="", hea
 ## Reading Test set - 561 columns - 2947 rows
 test_set <- read.table("./data/UCI HAR Dataset/test/X_test.txt", sep ="", header=FALSE)
 ## Creating a new data frame merging test and train data
-data_set <- join(train_set, test_set)
+data_set <- merge(train_set, test_set, all=TRUE)
+## updating column names of the dataset with the features names
+colnames(data_set) <- features
+
+
+
+## PART 2 - Extracts only the measurements on the mean and standard deviation for each measurement. 
+## ------------------------------------------------------------------------------------------------
+## Using grpe command combined with metacharacters
+## Copying to the data_std_mean dataframe
+data_std_mean <- data_set[,grep("mean()|std()", colnames(data_set))]
+
+
+
 
 
 
