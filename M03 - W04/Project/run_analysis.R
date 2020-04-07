@@ -102,3 +102,20 @@ subj_data_set <- rbind(subj_train_set, subj_test_set)
 data_std_mean$subject <- subj_data_set$V1
 
 
+
+## PART 5 - From the data set in step 4, creates a second, independent tidy data set with the average
+## of each variable for each activity and each subject
+## ------------------------------------------------------------------------------------------------
+
+## Calling the dplyr package to answer to the question
+library (dplyr)
+## Defining a pipeline going through 2 steps :
+## Step 1 - grouping by activity and subject
+## Step 2 - calculating mean values for each variables based on groups
+## Creating a group based on activity labels and subject using the group_by_at function
+
+data_std_mean_2<- data_std_mean %>% group_by_at(c("act_label","subject")) %>% summarise_all(mean)
+## Converting to data frame
+data_std_mean_2 <- as.data.frame(data_std_mean_2)
+## Keeping a csv copy of the dataframe
+write.csv(data_std_mean_2,"final_df.csv")
