@@ -48,17 +48,18 @@ download.file(fileUrl, destfile="./data/dataset.zip")
 unzip("./data/dataset.zip", exdir = "./data")
 
 ## Reading X data Files
+## --------------------
 ## Reading features file - 561 rows
 features <- read.table("./data/UCI HAR Dataset/features.txt", sep =" ", header=FALSE)
 features <- features$V2
 ## Reading Training set - 561 columns - 7352
-train_set <- read.table("./data/UCI HAR Dataset/train/X_train.txt", sep ="", header=FALSE)
+x_train_set <- read.table("./data/UCI HAR Dataset/train/X_train.txt", sep ="", header=FALSE)
 ## Reading Test set - 561 columns - 2947 rows
-test_set <- read.table("./data/UCI HAR Dataset/test/X_test.txt", sep ="", header=FALSE)
+x_test_set <- read.table("./data/UCI HAR Dataset/test/X_test.txt", sep ="", header=FALSE)
 ## Creating a new data frame merging test and train data
-data_set <- merge(train_set, test_set, all=TRUE)
+x_data_set <- merge(x_train_set, x_test_set, all=TRUE)
 ## updating column names of the dataset with the features names
-colnames(data_set) <- features
+colnames(x_data_set) <- features
 
 
 
@@ -66,7 +67,7 @@ colnames(data_set) <- features
 ## ------------------------------------------------------------------------------------------------
 ## Using grpe command combined with metacharacters
 ## Copying to the data_std_mean dataframe
-data_std_mean <- data_set[,grep("mean()|std()", colnames(data_set))]
+data_std_mean <- x_data_set[,grep("mean()|std()", colnames(x_data_set))]
 
 
 
@@ -84,3 +85,20 @@ y_act_label <- read.table("./data/UCI HAR Dataset/activity_labels.txt", sep ="",
 colnames(y_act_label) <- c("act_ind","act_label")
 ## Assigning activity label
 y_data_set$act_label <- y_act_label$act_label[y_data_set$V1]
+
+
+## PART 4 - Labelling the Dataset 
+## ------------------------------------------------------------------------------------------------
+data_std_mean$act_label <- y_data_set$act_label
+
+## Adding Subject information data to the dataset
+## Reading y Training set - 7352 rows
+subj_train_set <- read.table("./data/UCI HAR Dataset/train/subject_train.txt", sep ="", header=FALSE)
+## Reading y Test set - 2947 rows
+subj_test_set <- read.table("./data/UCI HAR Dataset/test/subject_test.txt", sep ="", header=FALSE)
+## Creating a new data frame merging test and train data
+subj_data_set <- rbind(subj_train_set, subj_test_set)
+## Adding Subject data to the dataframe
+data_std_mean$subject <- subj_data_set$V1
+
+
