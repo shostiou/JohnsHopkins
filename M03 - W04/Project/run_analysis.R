@@ -77,8 +77,7 @@ y_train_set <- read.table("./data/UCI HAR Dataset/train/y_train.txt", sep ="", h
 ## Reading y Test set - 5- 2947 rows
 y_test_set <- read.table("./data/UCI HAR Dataset/test/y_test.txt", sep ="", header=FALSE)
 ## Creating a new data frame merging test and train data
-y_data_set <- merge(y_train_set, y_test_set, by.x = "V1", by.y = "V1",all=TRUE)
-
+y_data_set <- rbind(y_train_set, y_test_set)
 
 
 
