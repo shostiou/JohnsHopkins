@@ -79,5 +79,3 @@ y_test_set <- read.table("./data/UCI HAR Dataset/test/y_test.txt", sep ="", head
 ## Creating a new data frame merging test and train data
 y_data_set <- rbind(y_train_set, y_test_set)
 
-
-
