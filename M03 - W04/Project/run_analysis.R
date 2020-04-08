@@ -1,6 +1,7 @@
 ## COURSERA JONHS HOPKINS - Module 03 - READING DATA
 ## 2020/04/07 - Stephane's Project for Module 03
-## Week 04
+## Week 04 - Getting and Cleaning Data Course Project
+## =======================================================
 
 ## PROJECT DESCRIPTION
 ## -------------------
@@ -65,7 +66,7 @@ colnames(x_data_set) <- features
 
 ## PART 2 - Extracts only the measurements on the mean and standard deviation for each measurement. 
 ## ------------------------------------------------------------------------------------------------
-## Using grpe command combined with metacharacters
+## Using grep command combined with metacharacters
 ## Copying to the data_std_mean dataframe
 data_std_mean <- x_data_set[,grep("mean()|std()", colnames(x_data_set))]
 
@@ -118,4 +119,4 @@ data_std_mean_2<- data_std_mean %>% group_by_at(c("act_label","subject")) %>% su
 ## Converting to data frame
 data_std_mean_2 <- as.data.frame(data_std_mean_2)
 ## Keeping a csv copy of the dataframe
-write.csv(data_std_mean_2,"final_df.csv")
+write.csv(data_std_mean_2,"tidy_dataset.csv")
