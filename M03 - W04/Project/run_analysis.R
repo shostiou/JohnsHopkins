@@ -93,9 +93,9 @@ y_data_set$act_label <- y_act_label$act_label[y_data_set$V1]
 data_std_mean$act_label <- y_data_set$act_label
 
 ## Adding Subject information data to the dataset
-## Reading y Training set - 7352 rows
+## Reading subject Training set - 7352 rows
 subj_train_set <- read.table("./data/UCI HAR Dataset/train/subject_train.txt", sep ="", header=FALSE)
-## Reading y Test set - 2947 rows
+## Reading subject Test set - 2947 rows
 subj_test_set <- read.table("./data/UCI HAR Dataset/test/subject_test.txt", sep ="", header=FALSE)
 ## Creating a new data frame merging test and train data
 subj_data_set <- rbind(subj_train_set, subj_test_set)
@@ -113,7 +113,6 @@ library (dplyr)
 ## Defining a pipeline going through 2 steps :
 ## Step 1 - grouping by activity and subject
 ## Step 2 - calculating mean values for each variables based on groups
-## Creating a group based on activity labels and subject using the group_by_at function
 
 data_std_mean_2<- data_std_mean %>% group_by_at(c("act_label","subject")) %>% summarise_all(mean)
 ## Converting to data frame
