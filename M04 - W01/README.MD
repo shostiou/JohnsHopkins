@@ -1,19 +1,23 @@
 # COURSERA - JOHNS HOPKINS
-# MODULE 04 - Exploratory Dataanalysis
+# MODULE 04 - Exploratory Data analysis
 ## Stephane's assignment for Week 01
 
 ### Loading the data set
 #### Memory Usage estimation
 The dataset has 2,075,259 rows and 9 columns. <br>
-The "object_size"" function of the pryr package calculates the memory usage of a specific variable <br>
-As the dataset embeds 3 types of data : date format (x1) , time format (x1) and float (x7 columns) <br>
-The memory usage of the complete dataset can be estimated : <br>
-MemUsage_dataset = (object_size(date_test) + object_size(time_test) + 7*object_size(float_test))*nrows_dataset <br>
+Based on the course, Memory usage will be estimated by applying the following calculation <br>
+nb_rows * nb_col * 8 bytes <br>
+Estimated Memory Usage = 149 Mb <br>
+Considering that I am currently executing R Studio under a virtual environment with limited RAM (1 GB), there is enough  <br>
+memory available to upload the complete dataset  <br>
 
-Estimated Memory Usage = 1.64 GB.
+#### Subsetting the dataset
+The analysis will be restricted to data from the dates 2007-02-01 to 2007-02-02.  <br>
+A dataframe limited to this subset is built : power_DF <br>
+This DF restricts the number of observations to 
 
-Considering that I am currently executing R Studio under a virtual environment with limited RAM (1 GB), I'll have to consider
-working only on a subset of the dataset.
-
-As suggested in the instructions, only relevant data (rom the dates 2007-02-01 and 2007-02-02) will be uploaded for this project.
+#### Data cleaning
+Performing a str() on the subset highlights that there are some inconsistent values in the dataframe <br>
+values "?" are reported while numbers are expected.
+Those inconsistent values need to be removed
 

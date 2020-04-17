@@ -24,4 +24,8 @@ Link to codebook : https://archive.ics.uci.edu/ml/datasets/Individual+household+
 Here's a good quote from a swirl lesson about exploratory graphs: "They help us find patterns in data and understand its properties. <br>
 They suggest modeling strategies and help to debug analyses. We DON'T use exploratory graphs to communicate results."<br>
 
+### Specific Variables
+- power : raw dataset uploaded from household_power_consumption.txt
+- power_DF : subset containing data from dates 01/02/2007 to 02/02/2007 (2880  obs. of  9 variables)
+
 

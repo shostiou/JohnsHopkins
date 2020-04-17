@@ -11,9 +11,12 @@ result<-dbGetQuery(myDB,"show databases;")
 SelectedDB <- result$Database[2]
 ## Listing tables from the selectedDB
 myDB <- dbConnect(MySQL(),user="s03Y5pmEya",password="jliPwtRnyh",host="remotemysql.com", db=SelectedDB)
+MyTable <- dbReadTable(myDB,"AEMP_V2_CAT")
 myDBTables <- dbListTables(myDB)
 ## Sending a query to the AEMP_V2_CAT Table
 MyQuery <- dbSendQuery(myDB,"SELECT * FROM AEMP_V2_CAT LIMIT 5")
+
 ## fetching result
 fetch(MyQuery)
 dbDisconnect(myDB)
+

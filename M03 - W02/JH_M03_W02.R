@@ -58,6 +58,10 @@ json1[[16]]$created_at
 ## We will use the sqldf package to practice the queries we might send with the dbSendQuery command in RMySQL.
 ## Download the American Community Survey data and load it into an R object called 
 
+## Create a logical vector that identifies the households on greater than 10 acres who sold more than $10,000 
+## worth of agriculture products. Assign that logical vector to the variable agricultureLogical. Apply the which() 
+## function like this to identify the rows of the data frame where the logical vector is TRUE. 
+
 ## Setting Working Directory
 setwd("/cloud/project/M03 - W02")
 

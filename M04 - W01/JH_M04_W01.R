@@ -32,32 +32,31 @@ unzip("./data/powerconsumption.zip", exdir = "./data")
 ## PART 2 - Estimating Memory usage of the data set
 ## --------------------------------------------------------
 ## 
-## The dataset is made of 9 columns - 1 of thoses uses "date", 1 uses "time" format
-## while 7 of them are used to store real format values (float)
-## Loading pryr library to estimate Memory usage
-library(pryr)
-## declaring test variables to estimate memory usage
-date_test <- as.Date("17/04/2020",format = "%d/%m/%y")
-time_test <- strftime(Sys.time(),"%H:%M:%S")
-float_test <- 123.123
+## The dataset is made of 9 columns  and 2075259 rows 
+
 ## Estimating memory usage
 nrows_dataset = 2075259
-MemUsage_dataset = (object_size(date_test) + object_size(time_test) + 7*object_size(float_test))*nrows_dataset
-paste("Memory Usage Estimation :",MemUsage_dataset)
-## Estimated Memory = 1.64 GB => Almost 3 Gb (x2 factor) will be required to load data properly
-## Considering that I am currently executing R Studio under a virtual environment with limited RAM (1 GB),
-## I'll have to consider working only on a subset of the dataset.
-## only relevant data (rom the dates 2007-02-01 and 2007-02-02) will be uploaded for this project
+ncols_dataset = 9
+MemUsage_dataset = ncols_dataset * nrows_dataset * 8
+paste("Memory Usage Estimation Mb :",MemUsage_dataset /1000000)
+# Result : 149 Mb
+# Considering that I am currently executing R Studio under a virtual environment with limited RAM (1 GB), there is enough
+# memory available to upload the complete dataset
 
 
 ## PART 3 - Loading Data
 ## --------------------------------------------------------
 ## 
-## Lets' use the readr package to upload the subset of our dataset
+## Lets' use the readr package to upload the dataset
 library(readr)
-## Note that the file uses ";" separators => the read_csv2 function will be used
-power <- read_csv2("./data/household_power_consumption.txt",col_names=TRUE,skip = 21997, nrow = 66638-21997)
+## Note that the file uses ";" separators => delim parameter has to be set
+power <- read_delim("./data/household_power_consumption.txt",delim=";",col_names=TRUE)
 
+## Converting Date variable to data format by calling the lubridate package
+library(lubridate)
+power$Date<-dmy(power$Date)
 
+## Subseting dataset to focus only 
+power_DF <- power[which(power$Date >="2007-02-01" & power$Date <= "2007-02-02"),]
 
 
