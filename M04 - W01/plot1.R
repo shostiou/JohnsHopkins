@@ -1,5 +1,6 @@
 ## COURSERA JONHS HOPKINS - Module 04 - EXPLORATORY ANALYSIS
 ## 2020/04/17 - Stephane's Assignment for Week 01
+## PLOT 1
 ##
 ## Electric Power Consumption dataset
 ## =======================================================
@@ -63,17 +64,3 @@ power_DF <- power[which(power$Date >="2007-02-01" & power$Date <= "2007-02-02"),
 ## Looking for ? values (corresponding to NAs)
 library(dplyr)
 power_DF<-select(power_DF,-contains("?"))
-
-
-
-## PART 4 - Plotting Global Active Power Histogram
-## --------------------------------------------------------
-## 
-## Using the basic plotting system
-dev.off()
-## Drawing the Histogram
-hist(power_DF$Global_active_power,main="Global Active Power",xlab="Global Active Power (kW)", ylab="Frequency",col="red")
-## Saving to png
-dev.copy(png,file="plot1.png")
-dev.off()
-

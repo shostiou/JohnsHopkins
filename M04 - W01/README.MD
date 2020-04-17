@@ -20,4 +20,10 @@ This DF restricts the number of observations to
 Performing a str() on the subset highlights that there are some inconsistent values in the dataframe <br>
 values "?" are reported while numbers are expected.
 Those inconsistent values need to be removed
+power_DF contains cleaned values at the end
+
+### Plot1.R
+this scripts plots a histogram of the distribution of Global Active Power
+
+
 
