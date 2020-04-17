@@ -14,16 +14,31 @@ memory available to upload the complete dataset  <br>
 #### Subsetting the dataset
 The analysis will be restricted to data from the dates 2007-02-01 to 2007-02-02.  <br>
 A dataframe limited to this subset is built : power_DF <br>
-This DF restricts the number of observations to 
 
 #### Data cleaning
 Performing a str() on the subset highlights that there are some inconsistent values in the dataframe <br>
-values "?" are reported while numbers are expected.
-Those inconsistent values need to be removed
-power_DF contains cleaned values at the end
+values "?" are reported while numbers are expected. <br>
+Those inconsistent values need to be removed <br>
+power_DF contains cleaned values at the end <br>
 
 ### Plot1.R
-this scripts plots a histogram of the distribution of Global Active Power
+this scripts plots a histogram of the distribution of Global Active Power & saves the plot in PNG format <br> 
 
+### Plot2.R
+this scripts plots a scatter plot of the evolution of the Global Active Power <br>
+Prior plotting, date & time needs to be merged to build a proper time base <br>
+At the end, it saves the plot in PNG format <br>
+
+### Plot3.R
+This script plots multiple scatter plots : evolution of the 3 the energy measured by <br>
+3 different submeters. <br>
+At the end, it saves the plot in PNG format <br>
+
+### Plot4.R
+This script plots 4 graphs on a single device <br>
+- Evolution of the Global Active Power <br>
+- Evolution of Voltage <br>
+- Evolution of submeters <br> 
+- Evolution of the global reactive Power <br>
 
 

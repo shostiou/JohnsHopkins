@@ -1,5 +1,6 @@
 ## COURSERA JONHS HOPKINS - Module 04 - EXPLORATORY ANALYSIS
 ## 2020/04/17 - Stephane's Assignment for Week 01
+## PLOT 4 - Multiple Base Plots
 ##
 ## Electric Power Consumption dataset
 ## =======================================================
@@ -66,14 +67,31 @@ power_DF<-select(power_DF,-contains("?"))
 
 
 
-## PART 4 - Plotting Global Active Power Histogram
+## PART 4 - Plotting Scatter Plot of submeters
 ## --------------------------------------------------------
-## 
+##
+## Merging Date & Time columns to get a proper time stamping reference
+## Let's use the lubridate package
+time_base <- with(power_DF, ymd(power_DF$Date) + hms(power_DF$Time))
+
 ## Using the basic plotting system
 dev.off()
-## Drawing the Histogram
-hist(power_DF$Global_active_power,main="Global Active Power",xlab="Global Active Power (kW)", ylab="Frequency",col="red")
-## Saving to png
-dev.copy(png,file="plot1.png")
-dev.off()
+## subseting the drawing device in 2 rows 2 columns
+par(mfrow= c(2,2))
+# Plotting Global Active Power
+plot(time_base,power_DF$Global_active_power,type="l",main="",xlab='',ylab="Global Active Power (kilowatts)",col="black")
+# Plotting Voltage
+plot(time_base,power_DF$Voltage,type="l",main="",xlab='',ylab="Voltage",col="black")
+## Plotting submeters
+plot(time_base,power_DF$Sub_metering_1 ,type="l",,xlab="",ylab="Energy sub metering",col="black")
+lines(time_base,power_DF$Sub_metering_2 ,type="l",col="red")
+lines(time_base,power_DF$Sub_metering_3 ,type="l",col="blue")
+## Adding a legend
+legend("topright" , col=c("black","red","blue"), legend = c("Sub_metering_1","Sub_metering_2","Sub_metering_3"),lty=c(1,1,1), adj= c(0,0.5)
+       ,x.intersp =0.2, y.intersp = 0.5, xjust=0, cex=0.8, inset = 0,xpd = 2,box.lty=0)
+## Plotting Reactive Power
+plot(time_base,power_DF$Global_reactive_power ,type="l",main="",xlab='',ylab="Global_reactive_power ",col="black")
 
+## Saving to png
+dev.copy(png,file="plot4.png")
+dev.off()
