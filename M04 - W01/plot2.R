@@ -1,6 +1,6 @@
 ## COURSERA JONHS HOPKINS - Module 04 - EXPLORATORY ANALYSIS
 ## 2020/04/17 - Stephane's Assignment for Week 01
-## PLOT 1 - Histogram
+## PLOT 2 - Scatter plot
 ##
 ## Electric Power Consumption dataset
 ## =======================================================
@@ -67,13 +67,17 @@ power_DF<-select(power_DF,-contains("?"))
 
 
 
-## PART 4 - Plotting Global Active Power Histogram
+## PART 4 - Plotting Scatter Plot of Global Active Power
 ## --------------------------------------------------------
-## 
+##
+## Merging Date & Time columns to get a proper time stamping reference
+## Let's use the lubridate package
+time_base <- with(power_DF, ymd(power_DF$Date) + hms(power_DF$Time))
+
 ## Using the basic plotting system
 dev.off()
-## Drawing the Histogram
-hist(power_DF$Global_active_power,main="Global Active Power",xlab="Global Active Power (kW)", ylab="Frequency",col="red")
+## Drawing the scatter plot
+plot(time_base,power_DF$Global_active_power,type="l",main="Global Active Power (kilowatts)",xlab='',ylab="Global Active Power (kilowatts)",col="black")
 ## Saving to png
-dev.copy(png,file="plot1.png")
+dev.copy(png,file="plot2.png")
 dev.off()

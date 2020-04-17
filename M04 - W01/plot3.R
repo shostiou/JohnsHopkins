@@ -1,6 +1,6 @@
 ## COURSERA JONHS HOPKINS - Module 04 - EXPLORATORY ANALYSIS
 ## 2020/04/17 - Stephane's Assignment for Week 01
-## PLOT 1 - Histogram
+## PLOT 3 - Multiple Scatter plot
 ##
 ## Electric Power Consumption dataset
 ## =======================================================
@@ -67,13 +67,23 @@ power_DF<-select(power_DF,-contains("?"))
 
 
 
-## PART 4 - Plotting Global Active Power Histogram
+## PART 4 - Plotting Scatter Plot of submeters
 ## --------------------------------------------------------
-## 
+##
+## Merging Date & Time columns to get a proper time stamping reference
+## Let's use the lubridate package
+time_base <- with(power_DF, ymd(power_DF$Date) + hms(power_DF$Time))
+
 ## Using the basic plotting system
 dev.off()
-## Drawing the Histogram
-hist(power_DF$Global_active_power,main="Global Active Power",xlab="Global Active Power (kW)", ylab="Frequency",col="red")
+## Drawing the scatter plots
+plot(time_base,power_DF$Sub_metering_1 ,type="l",,xlab="",ylab="Energy sub metering",col="black")
+lines(time_base,power_DF$Sub_metering_2 ,type="l",col="red")
+lines(time_base,power_DF$Sub_metering_3 ,type="l",col="blue")
+## Adding a legend
+legend("topright" , col=c("black","red","blue"), legend = c("Sub_metering_1","Sub_metering_2","Sub_metering_3"),lty=c(1,1,1), adj= c(0,0.5)
+       ,x.intersp =0.2, y.intersp = 0.5, xjust=0, cex=0.8, inset = 0,xpd = 2)
+
 ## Saving to png
-dev.copy(png,file="plot1.png")
+dev.copy(png,file="plot3.png")
 dev.off()
