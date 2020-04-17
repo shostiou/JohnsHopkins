@@ -76,14 +76,13 @@ time_base <- with(power_DF, ymd(power_DF$Date) + hms(power_DF$Time))
 
 ## Using the basic plotting system
 dev.off()
+png("plot3.png", width=480, height=480)
+
 ## Drawing the scatter plots
 plot(time_base,power_DF$Sub_metering_1 ,type="l",,xlab="",ylab="Energy sub metering",col="black")
 lines(time_base,power_DF$Sub_metering_2 ,type="l",col="red")
 lines(time_base,power_DF$Sub_metering_3 ,type="l",col="blue")
 ## Adding a legend
-legend("topright" , col=c("black","red","blue"), legend = c("Sub_metering_1","Sub_metering_2","Sub_metering_3"),lty=c(1,1,1), adj= c(0,0.5)
-       ,x.intersp =0.2, y.intersp = 0.5, xjust=0, cex=0.8, inset = 0,xpd = 2)
+legend("topright" , col=c("black","red","blue"), legend = c("Sub_metering_1","Sub_metering_2","Sub_metering_3"),lty=c(1,1,1))
 
-## Saving to png
-dev.copy(png,file="plot3.png")
 dev.off()
