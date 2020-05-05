@@ -130,4 +130,28 @@ dev.off()
 NEI_Balt_group_year2 <- group_by(NEI_Balt,year,type)
 ## Summarizing data - total Emissions per year / type
 total_pm25_Balt2 <- summarize(NEI_Balt_group_year2,pm25_sum=sum(Emissions))
+## Calling the ggplot2 package
+library(ggplot2)
+# Plotting pollution based on type
+png("plot3.png")
+qplot(year,pm25_sum,data = total_pm25_Balt2, color = type, geom = "line", main="Evolution of total PM2.5 emissions in Baltimore by type of source")
+dev.off()
+
+## QUESTION 4
+## ----------
+## Across the United States, how have emissions from coal combustion-related sources changed from 1999–2008?
+## Looking for the index of this pollutant in the SCC Data Frame
+coalSCCIndex <- SCC[grep("coal",tolower(SCC$Short.Name)),]$SCC
+# Removing Levels factors
+coalSCCIndex <- levels(droplevels(coalSCCIndex))
+# Filtering US DF based on Coal pollution SCC
+us_coal <- filter(NEI_group_year,SCC %in% coalSCCIndex)
+total_us_coal <- summarize(us_coal,pm25_sum_coal=sum(Emissions))
+# Plotting the evolution of PM25 vs years with basic plotting system
+png("plot4.png", width=520, height=480)
+with(total_us_coal, plot(year,pm25_sum_coal
+                      ,main="Evolution of PM2.5 COAL Related sources emissions in the US"
+                      , type = "l",col="blue", xlab ="Years", ylab="Total PM2.5 - COAL"))
+dev.off()
+
 
