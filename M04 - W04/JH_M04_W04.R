@@ -4,7 +4,7 @@
 ## == CONTEXT ==========================================================
 
 ## Setting Working Directory
-setwd("/cloud/project/M04 - W04")
+setwd("./projects/JohnsHopkins/M04 - W04")
 
 ## Preparing a directory to store data
 if (!file.exists("data"))
@@ -26,5 +26,45 @@ unzip(zipF,exdir=outDir)
 ## -------------------------------------------
 NEI <- readRDS("./data/summarySCC_PM25.rds")
 SCC <- readRDS("./data/Source_Classification_Code.rds")
+
+## == DATA EXPLORATION ==========================================================
+
+## NEI Data Frame
+print("NEI - Head")
+head(NEI)
+print("NEI - Tail")
+tail(NEI)
+print("NEI Summary")
+summary(NEI)
+print("NEI - str")
+str(NEI)
+print("NEI - NAs")
+# Number of NAs
+sum(is.na(NEI))
+# There are no NAs the dataset has already been cleaned up.
+
+## NEI Data Frame
+print("SCC - Head")
+head(SCC)
+print("SCC - Tail")
+tail(SCC)
+print("SCC Summary")
+summary(SCC)
+print("SCC - str")
+str(SCC)
+print("SCC - NAs")
+# Number of NAs
+sum(is.na(SCC))
+# There are 20330 NAs which is quite important
+# Proportion of NAs
+sum(is.na(SCC)) / (dim(SCC)[1] * dim(SCC)[2])
+# Around 11.5% of NAs
+
+
+
+
+
+
+
 
 
