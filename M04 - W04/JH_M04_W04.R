@@ -155,3 +155,9 @@ with(total_us_coal, plot(year,pm25_sum_coal
 dev.off()
 
 
+## QUESTION 5
+## ----------
+## How have emissions from motor vehicle sources changed from 1999–2008 in Baltimore City?
+## Looking for the index of vehicle pollution source in the SCC 
+coalSCCIndex <- SCC[grep("coal",tolower(SCC$Short.Name)),]$SCC
+
