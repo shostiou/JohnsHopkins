@@ -108,6 +108,8 @@ dev.off()
 ## Have total emissions from PM2.5 decreased in the Baltimore City, 
 ## Maryland (fips == "24510") from 1999 to 2008? 
 ## Use the base plotting system to make a plot answering this question.
+# calling the dplyr package
+library(dplyr)
 # Sum of emissions per year for baltimore
 NEI_Balt <- NEI[NEI$fips == "24510",]    
 NEI_Balt_group_year <- group_by(NEI_Balt,year)
@@ -126,6 +128,8 @@ dev.off()
 ## Of the four types of sources indicated by the type (point, nonpoint, onroad, nonroad) variable, which of these four sources
 ## have seen decreases in emissions from 1999–2008 for Baltimore City? Which have seen increases in emissions from 
 ## 1999–2008? Use the ggplot2 plotting system to make a plot answer this question.
+# calling the dplyr package
+library(dplyr)
 ## For Baltimore, grouping data by year and type
 NEI_Balt_group_year2 <- group_by(NEI_Balt,year,type)
 ## Summarizing data - total Emissions per year / type
@@ -141,10 +145,14 @@ dev.off()
 ## ----------
 ## Across the United States, how have emissions from coal combustion-related sources changed from 1999–2008?
 ## Looking for the index of this pollutant in the SCC Data Frame
+# calling the dplyr package
+library(dplyr)
+
 coalSCCIndex <- SCC[grep("coal",tolower(SCC$Short.Name)),]$SCC
 # Removing Levels factors
 coalSCCIndex <- levels(droplevels(coalSCCIndex))
 # Filtering US DF based on Coal pollution SCC
+NEI_group_year <- group_by(NEI,year)
 us_coal <- filter(NEI_group_year,SCC %in% coalSCCIndex)
 total_us_coal <- summarize(us_coal,pm25_sum_coal=sum(Emissions))
 # Plotting the evolution of PM25 vs years with basic plotting system
@@ -158,6 +166,60 @@ dev.off()
 ## QUESTION 5
 ## ----------
 ## How have emissions from motor vehicle sources changed from 1999–2008 in Baltimore City?
+# calling the dplyr package
+library(dplyr)
+
+NEI_Balt <- NEI[NEI$fips == "24510",]    
+NEI_Balt_group_year <- group_by(NEI_Balt,year)
 ## Looking for the index of vehicle pollution source in the SCC 
-coalSCCIndex <- SCC[grep("coal",tolower(SCC$Short.Name)),]$SCC
+vehSCCIndex <- SCC[grep("veh",tolower(SCC$Short.Name)),]$SCC
+# Removing Levels factors
+vehSCCIndex <- levels(droplevels(vehSCCIndex))
+# Filtering Baltimore DF based on Veh pollution SCC
+balt_veh <- filter(NEI_Balt_group_year,SCC %in% vehSCCIndex)
+total_balt_veh <- summarize(balt_veh,pm25_sum_veh=sum(Emissions))
+# Plotting the evolution of PM25 vs years with basic plotting system
+png("plot5.png", width=520, height=480)
+with(total_balt_veh, plot(year,pm25_sum_veh
+                         ,main="Evolution of PM2.5 Vehicule Related sources emissions in Baltimore"
+                         , type = "l",col="blue", xlab ="Years", ylab="Total PM2.5 - Vehicule"))
+dev.off()
+
+## QUESTION 6
+## ----------
+## Compare emissions from motor vehicle sources in Baltimore City with emissions from motor vehicle sources in Los Angeles County
+## California "06037". Which city has seen greater changes over time in motor vehicle emissions?
+## How have emissions from motor vehicle sources changed from 1999–2008 in Baltimore City?
+# calling the dplyr package
+library(dplyr)
+library(ggplot2)
+
+## Data for BAltimore
+NEI_Balt <- NEI[NEI$fips == "24510",]    
+NEI_Balt_group_year <- group_by(NEI_Balt,year)
+## Data for Los Angeles
+NEI_LA <- NEI[NEI$fips == "06037",]    
+NEI_LA_group_year <- group_by(NEI_LA,year)
+
+## Looking for the index of vehicle pollution source in the SCC 
+vehSCCIndex <- SCC[grep("veh",tolower(SCC$Short.Name)),]$SCC
+# Removing Levels factors
+vehSCCIndex <- levels(droplevels(vehSCCIndex))
+
+# Filtering Baltimore DF based on Veh pollution SCC
+balt_veh <- filter(NEI_Balt_group_year,SCC %in% vehSCCIndex)
+total_balt_veh <- summarize(balt_veh,pm25_sum =sum(Emissions))
+LA_veh <- filter(NEI_LA_group_year,SCC %in% vehSCCIndex)
+total_LA_veh <- summarize(LA_veh,pm25_sum =sum(Emissions))
+# Merging the dataframes
+#merged_LA_balt <- merge(total_balt_veh, total_LA_veh, by.x = "year", by.y ='year', all = TRUE)
+merged_LA_balt <- total_balt_veh %>%  mutate(City = 'Baltimore') %>% bind_rows(total_LA_veh %>%  mutate(City = 'Los Angeles'))
+
+
+# Comparing the evolution of vehicule polution between LA and Baltimore
+png("plot6.png", width=640, height=480)
+bal_LA_plot <- ggplot(merged_LA_balt,aes(y = pm25_sum, x = year,color = City)) + geom_line() 
+print(bal_LA_plot  + ggtitle("Comparing evolution of vehicule pollution between Baltimore & LA"))
+dev.off()
+
 
