@@ -30,6 +30,15 @@ SCC <- readRDS("./data/Source_Classification_Code.rds")
 ## == DATA EXPLORATION ==========================================================
 
 ## NEI Data Frame
+## ---------------
+## fips: A five-digit number (represented as a string) indicating the U.S. county
+## SCC: The name of the source as indicated by a digit string (see source code classification table)
+## Pollutant: A string indicating the pollutant
+## Emissions: Amount of PM2.5 emitted, in tons
+## type: The type of source (point, non-point, on-road, or non-road)
+## year: The year of emissions recorded
+
+
 print("NEI - Head")
 head(NEI)
 print("NEI - Tail")
@@ -42,8 +51,21 @@ print("NEI - NAs")
 # Number of NAs
 sum(is.na(NEI))
 # There are no NAs the dataset has already been cleaned up.
+# Checking the list of Pollutant in the DF
+unique(NEI$Pollutant)
+# Return : only one Pollutant in the data frame
+unique(NEI$type)
+# Retuns : "POINT"    "NONPOINT" "ON-ROAD"  "NON-ROAD"
+
 
 ## NEI Data Frame
+## ---------------
+# Source Classification Code Table (Source_Classification_Code.rds): This table provides a mapping from the SCC digit strings 
+## in the Emissions table to the actual name of the PM2.5 source. 
+## The sources are categorized in a few different ways from more general to more specific 
+## and you may choose to explore whatever categories you think are most useful. 
+## For example, source “10100101” is known as “Ext Comb /Electric Gen /Anthracite Coal /Pulverized Coal”.
+
 print("SCC - Head")
 head(SCC)
 print("SCC - Tail")
@@ -61,9 +83,22 @@ sum(is.na(SCC)) / (dim(SCC)[1] * dim(SCC)[2])
 # Around 11.5% of NAs
 
 
+## == ASSIGNMENT QUESTIONS ================================
 
+## QUESTION 1
+## ----------
+## Have total emissions from PM2.5 decreased in the United States from 1999 to 2008? Using the base plotting system,
+## make a plot showing the total PM2.5 emission from all sources for each of the years 1999, 2002, 2005, and 2008.
 
-
+# calling the dplyr package
+library(dplyr)
+# Sum of emissions per year
+NEI_group_year <- group_by(NEI,year)
+total_pm25 <- summarize(NEI_group_year,pm25_sum=sum(Emissions))
+# Plotting the evolution of PM25 vs years with basic plotting system
+with(total_pm25, plot(year,pm25_sum
+                      ,main="Evolution of total PM2.5 emissions in the US"
+                      ,col="blue", xlab ="Years", ylab="Total PM2.5"))
 
 
 
