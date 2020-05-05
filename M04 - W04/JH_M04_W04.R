@@ -96,10 +96,25 @@ library(dplyr)
 NEI_group_year <- group_by(NEI,year)
 total_pm25 <- summarize(NEI_group_year,pm25_sum=sum(Emissions))
 # Plotting the evolution of PM25 vs years with basic plotting system
+png("plot1.png")
 with(total_pm25, plot(year,pm25_sum
                       ,main="Evolution of total PM2.5 emissions in the US"
-                      ,col="blue", xlab ="Years", ylab="Total PM2.5"))
+                      , type = "l",col="blue", xlab ="Years", ylab="Total PM2.5"))
+dev.off()
 
 
-
-
+## QUESTION 2
+## ----------
+## Have total emissions from PM2.5 decreased in the Baltimore City, 
+## Maryland (fips == "24510") from 1999 to 2008? 
+## Use the base plotting system to make a plot answering this question.
+# Sum of emissions per year for baltimore
+NEI_Balt <- NEI[NEI$fips == "24510",]    
+NEI_Balt_group_year <- group_by(NEI_Balt,year)
+total_pm25_Balt <- summarize(NEI_Balt_group_year,pm25_sum=sum(Emissions))
+# Plotting the evolution of PM25 vs years for Baltimore with basic plotting system
+png("plot2.png")
+with(total_pm25_Balt, plot(year,pm25_sum
+                      ,main="Evolution of total PM2.5 emissions in Baltimore"
+                      , type = "l",col="blue", xlab ="Years", ylab="Total PM2.5"))
+dev.off()
