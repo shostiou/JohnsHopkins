@@ -118,3 +118,16 @@ with(total_pm25_Balt, plot(year,pm25_sum
                       ,main="Evolution of total PM2.5 emissions in Baltimore"
                       , type = "l",col="blue", xlab ="Years", ylab="Total PM2.5"))
 dev.off()
+
+
+
+## QUESTION 3
+## ----------
+## Of the four types of sources indicated by the type (point, nonpoint, onroad, nonroad) variable, which of these four sources
+## have seen decreases in emissions from 1999–2008 for Baltimore City? Which have seen increases in emissions from 
+## 1999–2008? Use the ggplot2 plotting system to make a plot answer this question.
+## For Baltimore, grouping data by year and type
+NEI_Balt_group_year2 <- group_by(NEI_Balt,year,type)
+## Summarizing data - total Emissions per year / type
+total_pm25_Balt2 <- summarize(NEI_Balt_group_year2,pm25_sum=sum(Emissions))
+
