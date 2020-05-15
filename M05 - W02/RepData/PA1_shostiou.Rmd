@@ -7,6 +7,10 @@ output:
     keep_md: true
 ---
 
+<br>
+<br>
+<br>
+
 
 ## Loading and preprocessing the data
 
@@ -19,7 +23,7 @@ output:
     tail(activity)
 ```
 
-The variables included in this dataset are:
+The variables included in this dataset are:  
 
 * **steps**: Number of steps taking in a 5-minute interval (missing
     values are coded as `NA`)
@@ -28,19 +32,37 @@ The variables included in this dataset are:
     format
 
 * **interval**: Identifier for the 5-minute interval in which
-    measurement was taken
+    measurement was taken  
+
+<br>
+
+#### Converting "date" column to date format
+
+```{r pre_process}
+  activity$date <- as.Date(activity$date, format = "%Y-%m-%d")
+```
 
 
-## What is mean total number of steps taken per day?
+<br>
+<br>
+<br>
+
+
+
+
+## What is mean total number of steps taken per day?  
 
 For this part of the assignment, the missing values of the dataset will be ignored  
-The dplyr package will be used.
+The dplyr package will be used.  
 
 ```{r dplyr_call,echo=FALSE, results='hide',warning=FALSE,message=FALSE}
     library(dplyr)
 ```
 
+#### Number of steps taken per day  
 
+The histogram belows shows the distribution of steps taken per day.  
+A number of bins (breaks) has been set to 20.  
 
 ```{r total_nb_steps_day}
     # Building a pipe
@@ -50,19 +72,130 @@ The dplyr package will be used.
      ,xlab="sum of steps per day")
 ```
 
+#### Calculation of mean and median values per day  
 
+```{r mean_steps}
+  mean_step_day = mean(activity_sum_day$sum_steps)
+  median_step_day = median(activity_sum_day$sum_steps)
+  # Printing the result
+  paste("mean number of steps per day:",mean_step_day)
+  paste("median number of steps per day:",median_step_day)
+```
 
-
-#### Number of steps taken per day
-
+<br>
+<br>
+<br>
 
 
 ## What is the average daily activity pattern?
+
+Making time series plots of the 5 minutes intervals (x axis) and the average number of steps taken average of steps
+taken, averages accross all days (y-axis)  
+
+```{r dayly_avg_pattern}
+  activity_avg_day <- activity %>% na.omit() %>%  group_by(interval) %>% summarize(avg_steps =mean(steps))
+  plot(activity_avg_day$interval,activity_avg_day$avg_steps, type='l', col='darkblue'
+     ,main="Average number of steps - over days", xlab="Time interval",ylab="Steps - averaged over days")
+
+```
+
+Finding which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?  
+
+```{r max_steps_5_int}
+  paste("5 min time interval with the highest nb of steps:", filter(activity_avg_day,avg_steps==max(avg_steps))[1])
+```
+
+<br>
+<br>
+<br>
 
 
 
 ## Imputing missing values
 
+Note that there are a number of days/intervals where there are missing values (coded as NA\color{red}{\verb|NA|}NA). The presence of missing days may introduce bias into some calculations or summaries of the data.  
+
+Calculating the number of the total number of missing values in the dataset (NAs)  
+
+```{r nb_NA}
+  paste("Nb of Missing Values in the dataset:",sum(is.na(activity)))
+```
+
+The stategy retained for filling the missing values is to use the mean value of the 5 minutes interval
+(read from the activity_avg_day dataframe)  
+
+```{r NA_imputing}
+  # Creating a new DF with values imputed to NAs
+  activity_filled <- activity
+  # Looping to replace NAs with the 5 min interval mean
+  for (i in which(is.na(activity)))
+    {
+    activity_filled[i,]$steps <- (filter(activity_avg_day, interval==activity_filled[i,]$interval)$avg_steps)
+    }
+```
+
+Checking if NAs are correctly removed
+
+```{r nb_NA_2}
+  paste("Nb of Missing Values in the filled dataset:",sum(is.na(activity_filled)))
+```
+<br>
+
+Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?  
+
+<br>
+
+#### Plotting the Histogram  
+
+```{r hist_plot_2}
+    # Building a pipe
+    activity_sum_day_fill <- activity_filled %>%  group_by(date) %>% summarize(sum_steps =sum(steps))
+    # Plotting histogram total nb of steps taken each day
+    hist(activity_sum_day_fill$sum_steps, breaks = 30, col="lightgreen", main="total number of steps taken per day NAs filled"
+     ,xlab="sum of steps per day")  
+```
+
+#### Computing mean & median for this new dataset  
+
+```{r mean_steps_2}
+  mean_step_day_f = mean(activity_sum_day_fill$sum_steps)
+  median_step_day_f = median(activity_sum_day_fill$sum_steps)
+  # Printing the result
+  paste("mean number of steps per day:",mean_step_day_f)
+  paste("median number of steps per day:",median_step_day_f)
+  # Differences
+  paste("Mean difference with dataset containing reoved NAs:",mean_step_day - mean_step_day_f)
+  paste("Median difference with dataset containing reoved NAs:",median_step_day - median_step_day_f)
+```
+
+The difference is only on the median value not on the mean.  
+
+<br>
+<br>
+<br>
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.  
+
+Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.  
+
+Make a panel plot containing a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.  
+
+```{r week_comp}
+  #Factor variable - checking if day is WE (1= sunday / 7=Sat)
+  library(lubridate)
+  f<-(wday(activity_sum_day_fill$date) == 1) | (wday(activity_sum_day_fill$date) == 7)
+  f<-factor(f,labels=c("weekday","weekend"))
+
+  # Comparing patterns between WE & Weekdays
+  library(lattice)
+  xyplot(activity_avg_day$avg_steps ~ activity_avg_day$interval| f,
+       layout=c(1,2),plot.points = FALSE,type = "l",ylab="avg nb of steps", xlab="interval", main="pattern comp between WE & Weekdays")
+
+```
+
+
+
+
