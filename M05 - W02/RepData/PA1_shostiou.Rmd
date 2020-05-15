@@ -20,7 +20,6 @@ output:
     activity <- read.csv("./data/activity.csv")
     ## Controlling Head & Tail of the dataset
     head(activity)
-    tail(activity)
 ```
 
 The variables included in this dataset are:  
@@ -34,6 +33,7 @@ The variables included in this dataset are:
 * **interval**: Identifier for the 5-minute interval in which
     measurement was taken  
 
+<br>
 <br>
 
 #### Converting "date" column to date format
@@ -77,10 +77,10 @@ A number of bins (breaks) has been set to 20.
 ```{r mean_steps}
   mean_step_day = mean(activity_sum_day$sum_steps)
   median_step_day = median(activity_sum_day$sum_steps)
-  # Printing the result
-  paste("mean number of steps per day:",mean_step_day)
-  paste("median number of steps per day:",median_step_day)
 ```
+
+Mean number of steps per day: `r mean_step_day`  
+Median number of steps per day: `r median_step_day`
 
 <br>
 <br>
@@ -102,8 +102,10 @@ taken, averages accross all days (y-axis)
 Finding which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?  
 
 ```{r max_steps_5_int}
-  paste("5 min time interval with the highest nb of steps:", filter(activity_avg_day,avg_steps==max(avg_steps))[1])
+  max_steps_5min <- filter(activity_avg_day,avg_steps==max(avg_steps))[1]
 ```
+
+5 min time interval with the highest nb of steps: `r max_steps_5min`
 
 <br>
 <br>
@@ -118,8 +120,12 @@ Note that there are a number of days/intervals where there are missing values (c
 Calculating the number of the total number of missing values in the dataset (NAs)  
 
 ```{r nb_NA}
-  paste("Nb of Missing Values in the dataset:",sum(is.na(activity)))
+  nb_na <- sum(is.na(activity))
 ```
+
+Number of missing values in the dataset : `r nb_na`
+
+
 
 The stategy retained for filling the missing values is to use the mean value of the 5 minutes interval
 (read from the activity_avg_day dataframe)  
@@ -155,19 +161,20 @@ Make a histogram of the total number of steps taken each day and Calculate and r
      ,xlab="sum of steps per day")  
 ```
 
+<br>
+
 #### Computing mean & median for this new dataset  
 
 ```{r mean_steps_2}
   mean_step_day_f = mean(activity_sum_day_fill$sum_steps)
   median_step_day_f = median(activity_sum_day_fill$sum_steps)
-  # Printing the result
-  paste("mean number of steps per day:",mean_step_day_f)
-  paste("median number of steps per day:",median_step_day_f)
-  # Differences
-  paste("Mean difference with dataset containing reoved NAs:",mean_step_day - mean_step_day_f)
-  paste("Median difference with dataset containing reoved NAs:",median_step_day - median_step_day_f)
 ```
 
+Mean number of steps per day (filled NAs): `r mean_step_day_f`  
+Median number of steps per day (filled NAs): `r median_step_day_f` 
+
+Mean difference with dataset containing removed NAs : `r mean_step_day - mean_step_day_f`  
+Median difference with dataset containing removed NAs : `r median_step_day - median_step_day_f`  
 The difference is only on the median value not on the mean.  
 
 <br>
@@ -192,7 +199,7 @@ Make a panel plot containing a time series plot of the 5-minute interval (x-axis
   # Comparing patterns between WE & Weekdays
   library(lattice)
   xyplot(activity_avg_day$avg_steps ~ activity_avg_day$interval| f,
-       layout=c(1,2),plot.points = FALSE,type = "l",ylab="avg nb of steps", xlab="interval", main="pattern comp between WE & Weekdays")
+       layout=c(1,2),plot.points = FALSE,type = "l",ylab="avg nb of steps over 5 min period", xlab="interval", main="Activity between WE & Weekdays")
 
 ```
 

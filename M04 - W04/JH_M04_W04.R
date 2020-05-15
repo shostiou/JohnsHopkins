@@ -18,6 +18,7 @@ if (!file.exists("data"))
 fileUrl <- "https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2FNEI_data.zip"
 download.file(fileUrl, destfile="./data/Pollution.zip", method = "curl")
 ## Unzipping the file
+
 zipF<- "/cloud/project/M04 - W04/data/Pollution.zip"
 outDir<-"/cloud/project/M04 - W04/data"
 unzip(zipF,exdir=outDir)

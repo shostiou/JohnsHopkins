@@ -33,20 +33,6 @@ output:
 ## 6    NA 2012-10-01       25
 ```
 
-```r
-    tail(activity)
-```
-
-```
-##       steps       date interval
-## 17563    NA 2012-11-30     2330
-## 17564    NA 2012-11-30     2335
-## 17565    NA 2012-11-30     2340
-## 17566    NA 2012-11-30     2345
-## 17567    NA 2012-11-30     2350
-## 17568    NA 2012-11-30     2355
-```
-
 The variables included in this dataset are:  
 
 * **steps**: Number of steps taking in a 5-minute interval (missing
@@ -58,6 +44,7 @@ The variables included in this dataset are:
 * **interval**: Identifier for the 5-minute interval in which
     measurement was taken  
 
+<br>
 <br>
 
 #### Converting "date" column to date format
@@ -104,21 +91,10 @@ A number of bins (breaks) has been set to 20.
 ```r
   mean_step_day = mean(activity_sum_day$sum_steps)
   median_step_day = median(activity_sum_day$sum_steps)
-  # Printing the result
-  paste("mean number of steps per day:",mean_step_day)
 ```
 
-```
-## [1] "mean number of steps per day: 10766.1886792453"
-```
-
-```r
-  paste("median number of steps per day:",median_step_day)
-```
-
-```
-## [1] "median number of steps per day: 10765"
-```
+Mean number of steps per day: 1.0766189\times 10^{4}  
+Median number of steps per day: 10765
 
 <br>
 <br>
@@ -143,12 +119,10 @@ Finding which 5-minute interval, on average across all the days in the dataset, 
 
 
 ```r
-  paste("5 min time interval with the highest nb of steps:", filter(activity_avg_day,avg_steps==max(avg_steps))[1])
+  max_steps_5min <- filter(activity_avg_day,avg_steps==max(avg_steps))[1]
 ```
 
-```
-## [1] "5 min time interval with the highest nb of steps: 835"
-```
+5 min time interval with the highest nb of steps: 835
 
 <br>
 <br>
@@ -164,12 +138,12 @@ Calculating the number of the total number of missing values in the dataset (NAs
 
 
 ```r
-  paste("Nb of Missing Values in the dataset:",sum(is.na(activity)))
+  nb_na <- sum(is.na(activity))
 ```
 
-```
-## [1] "Nb of Missing Values in the dataset: 2304"
-```
+Number of missing values in the dataset : 2304
+
+
 
 The stategy retained for filling the missing values is to use the mean value of the 5 minutes interval
 (read from the activity_avg_day dataframe)  
@@ -214,45 +188,21 @@ Make a histogram of the total number of steps taken each day and Calculate and r
 
 ![](PA1_shostiou_files/figure-html/hist_plot_2-1.png)<!-- -->
 
+<br>
+
 #### Computing mean & median for this new dataset  
 
 
 ```r
   mean_step_day_f = mean(activity_sum_day_fill$sum_steps)
   median_step_day_f = median(activity_sum_day_fill$sum_steps)
-  # Printing the result
-  paste("mean number of steps per day:",mean_step_day_f)
 ```
 
-```
-## [1] "mean number of steps per day: 10766.1886792453"
-```
+Mean number of steps per day (filled NAs): 1.0766189\times 10^{4}  
+Median number of steps per day (filled NAs): 1.0766189\times 10^{4} 
 
-```r
-  paste("median number of steps per day:",median_step_day_f)
-```
-
-```
-## [1] "median number of steps per day: 10766.1886792453"
-```
-
-```r
-  # Differences
-  paste("Mean difference with dataset containing reoved NAs:",mean_step_day - mean_step_day_f)
-```
-
-```
-## [1] "Mean difference with dataset containing reoved NAs: 0"
-```
-
-```r
-  paste("Median difference with dataset containing reoved NAs:",median_step_day - median_step_day_f)
-```
-
-```
-## [1] "Median difference with dataset containing reoved NAs: -1.1886792452824"
-```
-
+Mean difference with dataset containing removed NAs : 0  
+Median difference with dataset containing removed NAs : -1.1886792  
 The difference is only on the median value not on the mean.  
 
 <br>
@@ -298,7 +248,7 @@ Make a panel plot containing a time series plot of the 5-minute interval (x-axis
   # Comparing patterns between WE & Weekdays
   library(lattice)
   xyplot(activity_avg_day$avg_steps ~ activity_avg_day$interval| f,
-       layout=c(1,2),plot.points = FALSE,type = "l",ylab="avg nb of steps", xlab="interval", main="pattern comp between WE & Weekdays")
+       layout=c(1,2),plot.points = FALSE,type = "l",ylab="avg nb of steps over 5 min period", xlab="interval", main="Activity between WE & Weekdays")
 ```
 
 ![](PA1_shostiou_files/figure-html/week_comp-1.png)<!-- -->
