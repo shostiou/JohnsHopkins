@@ -2,7 +2,7 @@
 ## Week 04 - Module Final assignment
 
 ## Setting Working directory
-setwd("/cloud/project/M05 - W04")
+setwd("~/projects/JohnsHopkins/M05 - W04")
 
 ## Preparing a directory to store data
 if (!file.exists("data"))
@@ -25,12 +25,12 @@ if (!file.exists("data"))
 ## Raw data is stored in csv (comma separated file)
 
 fileUrl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
-download.file(fileUrl, destfile="./data/rawstorm.zip", method = "curl")
+download.file(fileUrl, destfile="./data/rawstorm.bz2",method="libcurl")
 
 ## Unzipping the storm data file to "data" disrectory
 # Unzipping data - byusing read.csv and bzfile commands
 # Unzipped data is transferred to the rawstorm dataframe
-rawstorm_df <- bzfile("./data/rawstorm.zip")
+rawstorm_df <- read.csv(bzfile("./data/rawstorm.bz2"),sep=',')
 
 
 
