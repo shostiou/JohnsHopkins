@@ -76,14 +76,83 @@ harmfulevent_df <- select(rawstorm_df,EVTYPE,FATALITIES,INJURIES) %>% group_by(E
 ## This question can be answered by focussing on data contained in the "Damage" Columns.
 ## Damage data is encoded into 4 columns :
 ## - PROPDMG : Property Damage
-## - PROPGMGEXP : Property Damage expenses
+## - PROPGMGEXP : Alphabetical characters used to signify magnitude include “K” for thousands, “M” for millions, and “B” for billions. 
 ## - CROPDMG : Crop Damage
-## - CROPDMGEXP : Crop Damage expenses
+## - CROPDMGEXP : Alphabetical characters used to signify magnitude include “K” for thousands, “M” for millions, and “B” for billions.
 
 ## Creating a subset to focus only on EVTYPE (type of events) and damages thanks to a pipe.
 
 dmgevent_df <- select(rawstorm_df,EVTYPE,PROPDMG,PROPDMGEXP,CROPDMG,CROPDMGEXP) %>% group_by(EVTYPE) #%>% 
   #summarise(TOT_FATALITIES = sum(FATALITIES), TOT_INJURIES = sum(INJURIES)) %>% arrange(desc(TOT_FATALITIES), desc(TOT_INJURIES))
+
+## Let's check if the data is consistent
+
+
+## Checking the consistency of the data stored in the PROPDMGEXP column.
+## - Is there nas ?
+## - are alphabetical characters conform to desciption : "k","M" or "B" ?
+
+sum(is.na(dmgevent_df$PROPDMG))
+sum(is.na(dmgevent_df$PROPDMGEXP))
+## There is no nas
+unique(dmgevent_df$PROPDMGEXP)
+## A bunch of values aren' conform to description : "+, 0, 5, 6, h, H, etc."
+## Let's determine the number of inconsistent records
+sort(summary(dmgevent_df$PROPDMGEXP))
+## It appears that the majority of the events are correctly encoded with values "","K" or "M"
+## Rejecting the other values can be considered as part of the data cleanin process
+
+
+## Checking the consistency of the data stored in the CROPDMGEXP column.
+## - Is there nas ?
+## - are alphabetical characters conform to desciption : "k","M" or "B" ?
+
+sum(is.na(dmgevent_df$CROPDMG))
+sum(is.na(dmgevent_df$CROPDMGEXP))
+## There is no nas
+unique(dmgevent_df$CROPDMGEXP)
+## A bunch of values aren' conform to description : "?","m","2" etc."
+## Let's determine the number of inconsistent records
+sort(summary(dmgevent_df$CROPDMGEXP))
+## It appears that the majority of the events are correctly encoded with values "","K" or "M"
+## Rejecting the other values can be considered as part of the data cleanin process
+
+
+## Data Cleaning
+## As a first step, data cleaning will consist in keeping correctly encoded values 
+## let's define a vector of "correct amount characters" amount_char_v 
+amount_char_v <- c("","K","M","B")
+# Extracting proper data from the dataframe using the previous verctor
+dmgevent_clean_df <- dmgevent_df %>% filter(PROPDMGEXP %in% amount_char_v,CROPDMGEXP %in% amount_char_v)
+# Correction factor levels
+dmgevent_clean_df <- droplevels(dmgevent_clean_df)
+
+
+
+## Preprocessing : Calculating cumulated damages
+## This operations requires to merge information contained on xxxDMG and xxxDMGEXP columns into numerical values
+## ie if the value of xxxDMGEXP = K => then xxxDMG value will be multiplied by 1000
+dmgevent_clean_df <- dmgevent_clean_df %>% 
+  mutate(PROPDMGEXP_num = 
+    case_when(
+      PROPDMGEXP=="" ~ 1,
+      PROPDMGEXP=="K" ~ 1000,
+      PROPDMGEXP=="M" ~ 1000000,
+      PROPDMGEXP=="M" ~ 1000000000)
+    )
+
+dmgevent_clean_df <- dmgevent_clean_df %>% 
+  mutate(CROPDMGEXP_num = 
+           case_when(
+             CROPDMGEXP=="" ~ 1,
+             CROPDMGEXP=="K" ~ 1000,
+             CROPDMGEXP=="M" ~ 1000000,
+             CROPDMGEXP=="M" ~ 1000000000)
+  )  
+
+
+## Adding a column to the DF containing the total damages costs (Property + Crop damages)
+dmgevent_clean_df <- mutate(dmgevent_clean_df, TOTDMG = PROPDMG*PROPDMGEXP_num + CROPDMG*CROPDMGEXP_num)
 
 
 
