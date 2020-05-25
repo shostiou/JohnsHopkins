@@ -158,7 +158,15 @@ dmgevent_clean_df <- mutate(dmgevent_clean_df, TOTDMG = PROPDMG*PROPDMGEXP_num +
 dmgcost_df  <- select(dmgevent_clean_df,EVTYPE,TOTDMG) %>% group_by(EVTYPE) %>% summarise(TOT_DAM_COST = sum(TOTDMG)) %>% 
                                                                                        arrange(desc(TOT_DAM_COST))
 
+# It appears that there are encoding errors in the encoding of the "Thunderstorm Winds" events.
+# The same event is encoded under 3 designations : TSTM WIND, THUNDERSTORM WIND, THUNDERSTORM WINDS
+# A final cleaning step has to be done for results to be representatives to assign homogeneous categories
+dmgcost_df[which(dmgcost_df$EVTYPE=="TSTM WIND"),] <- dmgcost_df[which(dmgcost_df$EVTYPE=="THUNDERSTORM WIND"),]
+dmgcost_df[which(dmgcost_df$EVTYPE=="THUNDERSTORM WINDS"),] <- dmgcost_df[which(dmgcost_df$EVTYPE=="THUNDERSTORM WIND"),]
 
+
+## Final Merging after correcting Thuderstorm Wind category
+dmgcost_df  <- dmgcost_df %>% group_by(EVTYPE) %>% summarise(TOT_DAM_COST = sum(TOT_DAM_COST)) %>% arrange(desc(TOT_DAM_COST))
 
 
 
@@ -173,13 +181,19 @@ dmgcost_df  <- select(dmgevent_clean_df,EVTYPE,TOTDMG) %>% group_by(EVTYPE) %>% 
 
 head(harmfulevent_df)
 
-# This observation can be confirmed by a plot showing the 6 most Fatel events
+# This observation can be confirmed by a plot showing the 6 most Fatal events
 # Note that in order to arrange the plot in descending order, the factor levels need to be updated thanks to a pipe
 
 head(harmfulevent_df) %>% mutate(EVTYPE=factor(EVTYPE, levels=EVTYPE)) %>%
 ggplot(aes(EVTYPE, group=1)) + geom_line(aes(y=TOT_FATALITIES),color="darkred") +
   labs(title = "TOTAL FATALITIES / EVENT")
 
+# This observation can be confirmed by a plot showing the 6 most events bringing the higgestes injuries
+# Note that in order to arrange the plot in descending order, the factor levels need to be updated thanks to a pipe
+
+head(harmfulevent_df) %>% mutate(EVTYPE=factor(EVTYPE, levels=EVTYPE)) %>%
+  ggplot(aes(EVTYPE, group=1)) + geom_line(aes(y=TOT_INJURIES),color="darkblue") +
+  labs(title = "TOTAL INJURIES / EVENT")
 
 
 
@@ -189,7 +203,15 @@ ggplot(aes(EVTYPE, group=1)) + geom_line(aes(y=TOT_FATALITIES),color="darkred") 
 # Focussing on the 6 most impacting events in terms of economical aspect, it appears that the most significant event is 
 # event is Thunderstorm Winds.
 head(dmgcost_df)
-# It clearly appears that there are encoding errors in the encoding of the "Thunderstorm Winds" events.
-# The same event is encoded under 3 designations : TSTM WIND, THUNDERSTORM WIND, THUNDERSTORM WINDS
+# It appears that the event having, by far, the greatest economical impact is Thunderstorm Wind
+
+# Let's confirm this observation with a plot
+
+head(dmgcost_df) %>% mutate(EVTYPE=factor(EVTYPE, levels=EVTYPE)) %>%
+  ggplot(aes(EVTYPE, group=1)) + geom_line(aes(y=TOT_DAM_COST),color="darkgreen") +
+  labs(title = "TOTAL DAMAGE COST / EVENT")
+
+
+
 
 
