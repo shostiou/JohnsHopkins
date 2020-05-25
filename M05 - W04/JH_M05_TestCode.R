@@ -154,6 +154,12 @@ dmgevent_clean_df <- dmgevent_clean_df %>%
 ## Adding a column to the DF containing the total damages costs (Property + Crop damages)
 dmgevent_clean_df <- mutate(dmgevent_clean_df, TOTDMG = PROPDMG*PROPDMGEXP_num + CROPDMG*CROPDMGEXP_num)
 
+## Subsetting the DF in order to report total damage costs grouped by events and sorted in desc order
+dmgcost_df  <- select(dmgevent_clean_df,EVTYPE,TOTDMG) %>% group_by(EVTYPE) %>% summarise(TOT_DAM_COST = sum(TOTDMG)) %>% 
+                                                                                       arrange(desc(TOT_DAM_COST))
+
+
+
 
 
 ## RESULTS
@@ -174,5 +180,16 @@ head(harmfulevent_df) %>% mutate(EVTYPE=factor(EVTYPE, levels=EVTYPE)) %>%
 ggplot(aes(EVTYPE, group=1)) + geom_line(aes(y=TOT_FATALITIES),color="darkred") +
   labs(title = "TOTAL FATALITIES / EVENT")
 
+
+
+
+## Event having the greatest economical impact
+## -------------------------------------------
+
+# Focussing on the 6 most impacting events in terms of economical aspect, it appears that the most significant event is 
+# event is Thunderstorm Winds.
+head(dmgcost_df)
+# It clearly appears that there are encoding errors in the encoding of the "Thunderstorm Winds" events.
+# The same event is encoded under 3 designations : TSTM WIND, THUNDERSTORM WIND, THUNDERSTORM WINDS
 
 
