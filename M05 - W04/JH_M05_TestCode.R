@@ -138,7 +138,7 @@ dmgevent_clean_df <- dmgevent_clean_df %>%
       PROPDMGEXP=="" ~ 1,
       PROPDMGEXP=="K" ~ 1000,
       PROPDMGEXP=="M" ~ 1000000,
-      PROPDMGEXP=="M" ~ 1000000000)
+      PROPDMGEXP=="B" ~ 1000000000)
     )
 
 dmgevent_clean_df <- dmgevent_clean_df %>% 
@@ -147,7 +147,7 @@ dmgevent_clean_df <- dmgevent_clean_df %>%
              CROPDMGEXP=="" ~ 1,
              CROPDMGEXP=="K" ~ 1000,
              CROPDMGEXP=="M" ~ 1000000,
-             CROPDMGEXP=="M" ~ 1000000000)
+             CROPDMGEXP=="B" ~ 1000000000)
   )  
 
 

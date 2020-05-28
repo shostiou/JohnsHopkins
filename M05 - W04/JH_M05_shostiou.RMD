@@ -19,7 +19,8 @@ Many severe events can result in fatalities, injuries, and property damage, and 
 possible is a key concern.  
 This document explores the impact, in the United States, of storms & severe weather events on :  
 - human fatalities / injuries  
-- the economy
+- the economy  
+28/05/2020 : correcting an error on cost calculation (Billions not correctly affected)
 
 <br>
 <br>
@@ -37,7 +38,7 @@ library(varhandle)
 ### Setting the Working Directory
 ```{r wd}
 ## Setting Working directory
-setwd("~/projects/JohnsHopkins/M05 - W04")
+setwd("~/JohnsHopkins/JohnsHopkins/M05 - W04")
 
 ## Preparing a directory to store data
 if (!file.exists("data"))
@@ -61,7 +62,7 @@ download.file(fileUrl, destfile="./data/rawstorm.bz2",method="libcurl")
 <br>
 Unzipping the storm data file to "data" disrectory by using read.csv and bzfile commands  
 Unzipped data is transferred to the rawstorm dataframe
-```{r unzipping}
+```{r unzipping, cache=TRUE}
 rawstorm_df <- read.csv(bzfile("./data/rawstorm.bz2"),sep=',')
 ```
 <br>
@@ -75,7 +76,7 @@ Creating a subset to focus only on EVTYPE (type of events), Fatalities and injur
 grouping by EV_TYPE, Summarizing by sum of fatalities & injuries per event + arranging by descending order  
 The resulting dataframe is stored in the "harmfulevent_df" variable  
 
-```{r harmfulevents}
+```{r harmfulevents, cache=TRUE}
 harmfulevent_df <- select(rawstorm_df,EVTYPE,FATALITIES,INJURIES) %>% group_by(EVTYPE) %>% 
   summarise(TOT_FATALITIES = sum(FATALITIES), TOT_INJURIES = sum(INJURIES)) %>% arrange(desc(TOT_FATALITIES), desc(TOT_INJURIES))
 ```
@@ -161,7 +162,7 @@ dmgevent_clean_df <- dmgevent_clean_df %>%
       PROPDMGEXP=="" ~ 1,
       PROPDMGEXP=="K" ~ 1000,
       PROPDMGEXP=="M" ~ 1000000,
-      PROPDMGEXP=="M" ~ 1000000000)
+      PROPDMGEXP=="B" ~ 1000000000)
     )
 
 dmgevent_clean_df <- dmgevent_clean_df %>% 
@@ -170,7 +171,7 @@ dmgevent_clean_df <- dmgevent_clean_df %>%
              CROPDMGEXP=="" ~ 1,
              CROPDMGEXP=="K" ~ 1000,
              CROPDMGEXP=="M" ~ 1000000,
-             CROPDMGEXP=="M" ~ 1000000000)
+             CROPDMGEXP=="B" ~ 1000000000)
   )  
 ```
 Adding a column to the DF containing the total damages costs (Property + Crop damages)  
@@ -179,17 +180,10 @@ dmgevent_clean_df <- mutate(dmgevent_clean_df, TOTDMG = PROPDMG*PROPDMGEXP_num +
 ```
 Subsetting the DF in order to report total damage costs grouped by events and sorted in desc order  
 ```{r}
-dmgcost_df  <- select(dmgevent_clean_df,EVTYPE,TOTDMG) %>% group_by(EVTYPE) %>% summarise(TOT_DAM_COST = sum(TOTDMG)) %>% 
-                                                                                       arrange(desc(TOT_DAM_COST))
-```
-It appears that there are encoding errors in the encoding of the "Thunderstorm Winds" events.  
-The same event is encoded under 3 designations : TSTM WIND, THUNDERSTORM WIND, THUNDERSTORM WINDS  
-A final cleaning step has to be done for results to be representatives to assign homogeneous categories  
-```{r}
-dmgcost_df[which(dmgcost_df$EVTYPE=="TSTM WIND"),] <- dmgcost_df[which(dmgcost_df$EVTYPE=="THUNDERSTORM WIND"),]
-dmgcost_df[which(dmgcost_df$EVTYPE=="THUNDERSTORM WINDS"),] <- dmgcost_df[which(dmgcost_df$EVTYPE=="THUNDERSTORM WIND"),]
-## Final Merging after correcting Thuderstorm Wind category
-dmgcost_df  <- dmgcost_df %>% group_by(EVTYPE) %>% summarise(TOT_DAM_COST = sum(TOT_DAM_COST)) %>% arrange(desc(TOT_DAM_COST))
+
+dmgcost_df <- select(dmgevent_clean_df,EVTYPE,TOTDMG) %>% group_by(EVTYPE) %>% summarise(TOT_DAM_COST = sum(TOTDMG)) %>%
+  arrange(desc(TOT_DAM_COST))
+
 ```
 <br>
 <br>
@@ -222,12 +216,11 @@ head(harmfulevent_df) %>% mutate(EVTYPE=factor(EVTYPE, levels=EVTYPE)) %>%
 <br>
 
 ### Event having the greatest economical impact  
-Focussing on the 6 most impacting events in terms of economical aspect, it appears that the most significant event is  
-Thunderstorm Winds.  
+Focussing on the 6 most impacting events in terms of economical aspect, it appears that the most significant event is Flood.  
 ```{r}
 head(dmgcost_df)
 ```
-It appears that the event having, by far, the greatest economical impact is Thunderstorm Wind  
+It appears that the event having, by far, the greatest economical impact is Flood  
 <br>
 Let's confirm this observation with a plot  
 ```{r}
