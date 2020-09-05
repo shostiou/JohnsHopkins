@@ -50,11 +50,11 @@ sampling_mean = mean(dist_avg)
 paste0('Sampling Distribution of the means mean = ', sampling_mean)  
 
 # Let's visualy explore those calculations  
-hist(dist_1000_exp, breaks=20, main = "Sample Distribution")
+hist(dist_1000_exp, breaks=20, main = "Sample Distribution + Means")
 abline(v = sample_mean, col = "blue", lwd = 2)
 abline(v = theo_mean, col = "red", lwd = 2)
 
-hist(dist_avg, breaks=20, main = "Sampling Distribution of Means")
+hist(dist_avg, breaks=20, main = "Sampling Distribution of Means + Means")
 abline(v = sampling_mean, col = "blue", lwd = 2)
 abline(v = theo_mean, col = "red", lwd = 2)
 
@@ -81,7 +81,8 @@ hist(dist_1000_exp, breaks=20, main = "Sample Distribution + True / sample std d
 abline(v = sample_mean+sqrt(sample_var), col = "blue", lwd = 2)
 abline(v = sample_mean-sqrt(sample_var), col = "blue", lwd = 2)
 abline(v = sample_mean+sqrt(theo_var), col = "red", lwd = 2)
-abline(v = sample_mean-sqrt(theo_var), col = "red", lwd = 2)  
+abline(v = sample_mean-sqrt(theo_var), col = "red", lwd = 2)
+abline(v = sample_mean, col = "green", lwd = 2)  
 # Let's now observe the variance of the sampling distribution of means  
 sampling_var <- var(dist_avg) 
 paste0('Sampling Distribution of the means variance = ', sampling_var)  
@@ -94,21 +95,23 @@ As a reminded : std_deviation = sqrt(variance)
 We can also see that the variance of the sampling distribution of the means as nothing to do with the sample / population variance. This is perfectly normal because this variance measures the variability of the approximation of the population (true) mean.
 
 
-### Analysing Variance
+### Sampling Distribution of Means - Normal approximation
+
+The application of the Central Limit Theorem shows that the sampling distribution of the means can be approximated by a normal distribution :  
+- Mean = sample mean  
+- Standard Error = sample_std_dev / sqrt(means sample size)  
+Note : The normality conditions can be satisfied in this specific case because each observation has been randomly and independently generated.
+
+```{r normal_approx}
+#Let's compute the standard Error
+sampling_SE <- sd(dist_1000_exp)/sqrt(40)
+# Compating distribution + normal approximation
+hist(dist_avg, breaks=20, main = "Sampling Distribution of Means", prob=TRUE)
+curve(dnorm(x, mean=sampling_mean, sd=sampling_SE), add=TRUE, col="red")
 
 
-
-
-
-
-
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+We can see graphicaly that the sampling distribution of means can be approximated by a normal distribution (according to Central Limit Theorem)
+
+
