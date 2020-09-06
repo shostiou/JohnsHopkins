@@ -1,0 +1,81 @@
+---
+title: "Johns Hopkins Coursera - Statistical Inference - Project Part 2"
+author: "shostiou"
+date: "06/09/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Part 02 - Basic Inferential Data Analysis
+
+This second part of the project is dedicated to the analysis of the ToothGrowth dataset (embedded in the R package).  
+
+### Data upload & basic exploration
+
+Let's start by loading the dataset and by doing basic explorations.  
+Refering to the help associated to the data, this dataset is describe as : **"The response is the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) by one of two delivery methods, orange juice or ascorbic acid (a form of vitamin C and coded as VC)."**  
+
+Content :   
+60 observations on 3 variables.
+[,1]	len	numeric	Tooth length
+[,2]	supp	factor	Supplement type (VC or OJ).
+[,3]	dose	numeric	Dose in milligrams/day
+
+```{r data_load}
+# Loading the dataset
+data(ToothGrowth)  
+# Getting general overview of the data  
+str(ToothGrowth)  
+# Getting summary statistics.
+summary(ToothGrowth)  
+# Let's visualize the distribution of the numerical values
+hist(ToothGrowth$len, main = "distribution of Tooth length")  
+hist(ToothGrowth$dose, main = "distribution of Vitamin doses")
+
+```
+We can observe that the data contains 2 groups of observations. Each of those groups is made of 30 observation (Orange Juice / Ascorbic Acid).  
+Even though the vitamin doses is numerical data, the values observed in the dataset is limited to 3 levels : 0.5; 1 ; 2. We can consider this variable as a discrete (not coninuous).  
+
+Let's pursue the exploration by comparing the distribution of Tooth length based on the delivery method used (orange Juice - OJ ; ascorbid acid - VC)
+
+
+```{r hist_by_del_method}
+# We call use ggplot2 to show the distributions  
+library(ggplot2)
+# Building the histograms based on supp variable  
+ggplot(ToothGrowth, aes(x = len)) +
+  geom_histogram(aes(color = supp, fill = supp), 
+                position = "identity", alpha = 0.4) +
+  scale_color_manual(values = c("#00AFBB", "#E7B800")) +
+  scale_fill_manual(values = c("#00AFBB", "#E7B800"))
+
+```
+The observation of the 2 overlapped distributions doesn't provide a key evidence between Tooth lengths & the delivery method used during the experiment.
+
+
+### Comparing the means
+
+Let's compare the means of the tooth length distribution based on the delivery method.
+
+```{r sample_means}
+# Let's call the dplyr package
+library(dplyr)
+# means & standard error computation  
+ToothGrowth %>% group_by(supp) %>% summarize(mean_len = mean(len))
+
+```
+
+We can observe that mean values of the 2 distributions (tooth length with orange juice OJ / tooth length with ascorbic acis CV) differs.  
+
+### Hypothesis Test
+
+Now to determine is this difference is statistically pertinent, we will use a Hypothesis test :
+H0 : xbar_len_OJ - xbar_len_CV = 0
+HA : xbar_len_OJ -  xbar_len_CV != 0  
+
+
+
+
