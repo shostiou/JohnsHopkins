@@ -16,16 +16,16 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This second part of the project is dedicated to the analysis of the ToothGrowth dataset (embedded in the R package).  
 
-### Data upload & basic exploration
+### Data upload & basic exploration  
 
 Let's start by loading the dataset and by doing basic explorations.  
 Refering to the help associated to the data, this dataset is describe as : **"The response is the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) by one of two delivery methods, orange juice or ascorbic acid (a form of vitamin C and coded as VC)."**  
 
 Content :   
-60 observations on 3 variables.
-[,1]	len	numeric	Tooth length
-[,2]	supp	factor	Supplement type (VC or OJ).
-[,3]	dose	numeric	Dose in milligrams/day
+60 observations on 3 variables.  
+[,1]	len	numeric	Tooth length  
+[,2]	supp	factor	Supplement type (VC or OJ).  
+[,3]	dose	numeric	Dose in milligrams/day  
 
 ```{r data_load}
 # Loading the dataset
@@ -44,7 +44,7 @@ df_nb_rows = as.numeric(nrow(ToothGrowth))
 We can observe that the data contains 2 groups of observations. Each of those groups is made of 30 observation (Orange Juice / Ascorbic Acid).  
 Even though the vitamin doses is numerical data, the values observed in the dataset is limited to 3 levels : 0.5; 1 ; 2. We can consider this variable as a discrete (not coninuous).  
 
-Let's pursue the exploration by comparing the distribution of Tooth length based on the delivery method used (orange Juice - OJ ; ascorbid acid - VC)
+Let's pursue the exploration by comparing the distribution of Tooth length based on the delivery method used (orange Juice - OJ ; ascorbid acid - VC)  
 
 
 ```{r hist_by_del_method}
@@ -58,12 +58,12 @@ ggplot(ToothGrowth, aes(x = len)) +
   scale_fill_manual(values = c("#00AFBB", "#E7B800"))
 
 ```
-The observation of the 2 overlapped distributions doesn't provide a key evidence between Tooth lengths & the delivery method used during the experiment.
+The observation of the 2 overlapped distributions doesn't provide a key evidence between Tooth lengths & the delivery method used during the experiment.  
 
 
-### Comparing the means
+### Comparing the means  
 
-Let's compare the means of the tooth length distribution based on the delivery method.
+Let's compare the means of the tooth length distribution based on the delivery method.  
 
 ```{r sample_means}
 # Let's call the dplyr package
@@ -75,16 +75,16 @@ ToothGrowth %>% group_by(supp) %>% summarize(mean_len = mean(len), std_len = sd(
 
 We can observe that mean values of the 2 distributions (tooth length with orange juice OJ / tooth length with ascorbic acis CV) differs.  
 
-### Hypothesis Test
+### Hypothesis Test  
 
-Now to determine is this difference is statistically pertinent, we will use a Hypothesis test :
-H0 : xbar_len_OJ - xbar_len_CV = 0
+Now to determine is this difference is statistically pertinent, we will use a Hypothesis test :  
+H0 : xbar_len_OJ - xbar_len_CV = 0  
 HA : xbar_len_OJ -  xbar_len_CV != 0  
 Note that the 2 groups will be considered as being unpaired.  
 As a second assumption, we will consider a constant variance in the population.  
 
-Finally we will conclude the hypothesis test by computing the p-value associated to a confidence interval of 95%. The test to be used will be 2 sided test. Note : a two tail test will be used.  
-Let's use T distribution to calculate the p-value.
+Finally we will conclude the hypothesis test by computing the p-value associated to a confidence   interval of 95%. The test to be used will be 2 sided test. Note : a two tail test will be used.  
+Let's use T distribution to calculate the p-value.  
 
 ```{r diff_means}
 # Let's define specific dataframes for OJ and VC
@@ -95,7 +95,7 @@ t.test(len_OJ,len_VC, alternative="two.sided", paired=FALSE, mu = 0, conf.level 
 
 ```
 
-**CONCLUSION :** as p-value > 0.05 we failed to reject the null hypothesis.  
-The data doesn't provide evidence of differences in means between the Orange Juice and Ascorbic Acid feeding methods.
+**CONCLUSION :** as p-value > 0.05 we failed to reject the null hypothesis.   
+The data doesn't provide evidence of differences in means between the Orange Juice and Ascorbic Acid feeding methods.  
 
 
