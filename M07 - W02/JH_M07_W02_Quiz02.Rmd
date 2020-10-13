@@ -97,4 +97,14 @@ The answer will be
 One short ton increase is equivalent to x2 units.  
 
 
+## Question 9
+
+```{r}
+# Model with just the intercept
+sum((mtcars$mpg-(mtcars$wt+37.2851))^2)
+# Complete model
+sum(mpg_model$residuals^2)
+```
+
+
 
