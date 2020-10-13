@@ -1,0 +1,144 @@
+---
+title: "JH - M07 - Course Notes"
+author: "shostiou"
+date: "13/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exploration of Galton's data
+
+reshape est une extension développée par Hadley Wickham. Elle permet de passer facilement d'un format de données «long» (une ligne par individu et par variable) à un format «large» (une seule ligne par individu). Elle est notamment utile pour mettre en forme les données avant utilisation des fonctions graphiques de ggplot2.  
+
+galton :  
+ligne = 1 colonne child / 1 colonne parent  
+long :  
+1 ligne = 1 donnée - 1 colonne variable / 1 colonne valeur  
+
+```{r}
+library(UsingR)
+library(reshape)
+library(ggplot2)
+```
+
+
+
+```{r explo}
+
+# the melt function is part of the reshape package
+long <- melt(galton)
+# plotting the data
+g <- ggplot(long, aes(x=value, fill = variable))+
+    geom_histogram(colour = "black", binwidth=1)+
+    facet_grid(. ~ variable)
+g
+```
+
+## Research the Middle via Least squares
+
+```{r}
+library(manipulate)
+```
+
+```{r}
+myHist <- function(mu){
+# Computation of mean squarred error
+mse <- mean((galton$child - mu)^2)
+# plotting mean value
+g <- ggplot(galton, aes(x = child)) + geom_histogram(fill = "salmon", colour = "black", binwidth=1)
+g <- g + geom_vline(xintercept = mu, size = 3)
+g <- g + ggtitle(paste("mu = ", mu, ", MSE = ", round(mse, 2), sep = ""))
+g
+}
+manipulate(myHist(mu), mu = slider(62, 74, step = 0.5))
+```
+
+It seems we minimize the value of MSE at mu = 68.  
+
+```{r}
+mean(galton$child)
+```
+
+The empirical mean minimizes the function.  
+Scatter plot
+
+```{r}
+ggplot(galton, aes(x=parent,y=child))+geom_jitter() + geom_smooth(method="lm")
+```
+
+The jitter function is used because a lot of points are overlapped.  
+The geom_smooth can be used (with proper lm) to trace the lm approximation.  
+
+
+
+## Fitting Galton's data
+
+
+Fitting Galton's data with linear regression  
+
+```{r}
+x <- galton$parent
+y <- galton$child
+# correlation coefficient
+R <- cor(x,y)
+sx <- sd(x)
+sy <- sd(y)
+# slope
+beta1 <- sy/sx*R
+# using mean values as the line goes through these point.
+beta0 <- mean(y) - beta1*mean(x)  
+# Printing
+paste("intercept: ",beta0,"slope : ",beta1)
+# Comparing result to the lm fit function
+my_model <- lm(y~x)
+summary(my_model)
+```
+
+
+## Example of Regression - diamond price  
+
+Let’s analyze the diamond data set from the UsingR package. The data is diamond prices (in Singapore
+dollars) and diamond weight in carats. Carats are a standard measure of diamond mass, 0.2 grams.
+To get the data use library(UsingR); data(diamond)  
+
+```{r}
+data(diamond)
+```
+
+```{r}
+ggplot(data=diamond, aes(x=carat, y=price))+geom_point() + geom_smooth(method="lm")
+```
+
+Training the model
+
+```{r}
+my_model <- lm(price~carat,data=diamond)
+summary(my_model)
+```
+
+```{r}
+coef(my_model)
+
+```
+
+Interpretation of the residuals  
+
+```{r}
+# The resid function records residuals - model fit
+my_resid <- resid(my_model)
+# Preduction of the model
+my_pred <- predict(my_model)
+
+# Controlling constant variance
+plot(my_resid)
+hist(m_resid)
+```
+
+
+
+
+
+
