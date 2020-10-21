@@ -1,8 +1,10 @@
 ---
-title: "JH - M07 - W04 Final"
+title: "JH - M07 - Regression Project"
 author: "S. Hostiou"
 date: "21/10/2020"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE, echo=FALSE}
@@ -20,14 +22,16 @@ You work for Motor Trend, a magazine about the automobile industry. Looking at a
     
 This work is part of the Regression Models course provided by Johns Hopkins University at Coursera.The "mtcars" data set is used for the purpose of this exercise. \
 
+The approach followed to answer our 2 questions will be to build a linear model with the mpg variable as a response variable and a set of regressors as inputs.  
+This model will provide us elements of interpretation to understand how the different regressors kept in our model can influence our miles per gallon concern.\
 
-## Main section
+## Checking Data Set Content
 
 Let's start by importing the data into the R environment and by having a look at the content of the dataframe.
 
 ```{r}
 data("mtcars")
-str(mtcars)
+head(mtcars)
 ```
 The mpg (miles per gallon) variable will be our response variable. Our approach will be to configure a linear model in order to identify how the other variables can influence fuel consumption.  
 The following variables will be consisered as numeric continuous : disp (displacement cu in), hp (horse power),drat (rear axle ratio), wt (weight), qsec (1/4 mile time).\
@@ -38,11 +42,9 @@ The remaining variables will be handled as factor variables : cyl (nb of cyl), v
 my_mtcars <- mtcars
 ```
 
-### Approach
+### First assumption
 
 The first exploratory plots given in appendix 1 gives us some primary elements to answer the question. Box plot & distribution diagrams of mpg vs transmission mode (auto / man) tend to show lower mpg with automatic transmission and higher mpg with manual transmission.\
-The approach taken to answer our 2 initial questions will be to build a linear model with the mpg variable as a response variable and a set of regressors as inputs.  
-This model will provide us elements of interpretation to understand how the different regressors kept in our model can influence the miles per gallon concern.\
 
 
 ### Collinearity Identification  
@@ -53,13 +55,14 @@ As a first step we will identify if there are strong evidences of high correlati
 mtcars %>% cor()
 ```
 
-This correlation matrix allows us to identify strong correlations between the following variables :  
+This correlation matrix allows us to identify strong correlations between the following variables : 
 cyl & disp, cyl & hp, cyl & vs, disp & wt. With the support of the plot of appendix 1 (pair plots including those 4 variables), decision is taken to suppress the cyl & disp variables as they are highly correlated with hp, ws and vs. This makes sense because bigger cars will have bigger engines with more cylinders... The other variables will be kept because they can contribute to explain variability in the model.\
+In addition,  moderate correlation values between our response variable and qsec, gear and carb, we will not consider those variables as well.\
 
 ### Model definition
 
-In this step, we will fit a set of models by conducting a forward approach (step by step approach with new variables added at each step). Note that as stated above thanks to the correlation analysis, disp & cyl variables will not be embedded into our model. Considering, moderate correlation values between our response variable and qsec, gear and carb, we will not consider those variables as well.\
-mpg will be our response variable and as our questions are related to the impact of transmission mode, the am variable will be embedded in each instance of the model. Our categorical variables will be dealt as factors. Anova will be applied to select the best model (nested likelihood ratio tests).\
+In this step, we will fit a set of models by conducting a forward approach (step by step nested approach with new variables added at each step). 
+mpg will be our response variable and as our questions are related to the impact of transmission mode, the am variable will be embedded in each model. Our categorical variables will be handled as factors. Anova will be applied to select the best model (nested likelihood ratio tests).\
 
 ```{r}
 fit0 <- lm(mpg~factor(am),my_mtcars)
@@ -72,26 +75,18 @@ fit6 <- lm(mpg~factor(am)+hp+factor(vs)+drat+wt,my_mtcars)
 
 anova(fit0,fit5)
 ```
-Here, we control the evolution of the coefficient associated to the "am" variable.
+As a second step, we control the evolution of the coefficient associated to the "am" variable.
 
 ```{r}
-rbind(summary(fit0)$coef[2,],
-      summary(fit1)$coef[2,],
-      summary(fit2)$coef[2,],
-      summary(fit3)$coef[2,],
-      summary(fit4)$coef[2,],
-      summary(fit5)$coef[2,],
-      summary(fit6)$coef[2,])
+rbind(summary(fit0)$coef[2,], summary(fit1)$coef[2,], summary(fit2)$coef[2,], summary(fit3)$coef[2,], summary(fit4)$coef[2,], summary(fit5)$coef[2,],summary(fit6)$coef[2,])
 ```
 
 Finally we select fit5 as our best model as this model is the one which minimizes the std. Error for the coefficient associated to the am variable. Diagnosis elements associated to the model are given in appendix number 3 and allow us to conclude that the model fit appears to be valid.\
 
 
-### INTERPRETATIONS  
+### Interpretations  
 
-The coefficients of the model can be interpreted as follow :\
-- On average, with other variables being fixed, compared to an automatic transmission, manual transmission increases mpg by 5.29. This value is statistically significant as the Pr associated to this coefficient is < to 0.05  
-
+On average, with other variables being fixed, compared to an automatic transmission, manual transmission increases mpg by 5.29. This value is statistically significant as the Pr associated to this coefficient is < to 0.05.  
 
 The confidence interval associated to the coefficient (manual transmission) is estimated below :  
 
@@ -99,9 +94,13 @@ The confidence interval associated to the coefficient (manual transmission) is e
 confint(fit5)[2,]
 ```
 
-As this confidence interval doesn't include zero, We can conclude that manual transmission mode is more efficient than automatic transmission !
+As this confidence interval doesn't include zero, We can conclude that manual transmission mode is more efficient than automatic transmission !\
+\
+\
 
+***
 
+\
 
 ## Appendixes - Plots
 
@@ -110,17 +109,12 @@ As this confidence interval doesn't include zero, We can conclude that manual tr
 The main concern is related to identification of links between transmission mode (auto / manu) and mpg. This plot is used to visualize mpg distributions vs transmission categories.  
 
 ```{r}
-ggplot(my_mtcars)+
-  geom_boxplot(mapping = aes (x=am,y=mpg, fill = am))+
-  ggtitle("Miles par gallon per Transmission 0 = auto / 1 = man")
-```
+#ggplot boxplot not printed correctly with Knitr, using basing plotting instead.
+boxplot(mpg ~ am, data = my_mtcars, col=(c("red","blue")))
 
-```{r}
-ggplot(my_mtcars)+
-  geom_histogram(mapping = aes (mpg, fill = am),bins=12)+
-  ggtitle("Miles par gallon per Transmission 0 = auto / 1 = man")
-```
 
+
+```
 
 ### Appendix 2 - pair plots
 
