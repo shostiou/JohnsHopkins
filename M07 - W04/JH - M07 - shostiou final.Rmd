@@ -1,0 +1,160 @@
+---
+title: "JH - M07 - W04 Final"
+author: "S. Hostiou"
+date: "21/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# useful libreries import
+library(ggplot2); library(dplyr)
+```
+
+## Summary
+
+You work for Motor Trend, a magazine about the automobile industry. Looking at a data set of a collection of cars, they are interested in exploring the relationship between a set of variables and miles per gallon (MPG) (outcome). They are particularly interested in the following two questions:  
+\
+    - Is an automatic or manual transmission better for MPG \
+    - Quantify the MPG difference between automatic and manual transmissions \
+    
+This work is part of the Regression Models course provided by Johns Hopkins University at Coursera.The "mtcars" data set is used for the purpose of this exercise. \
+
+
+## Main section
+
+Let's start by importing the data into the R environment and by having a look at the content of the dataframe.
+
+```{r}
+data("mtcars")
+str(mtcars)
+```
+The mpg (miles per gallon) variable will be our response variable. Our approach will be to configure a linear model in order to identify how the other variables can influence fuel consumption.  
+The following variables will be consisered as numeric continuous : disp (displacement cu in), hp (horse power),drat (rear axle ratio), wt (weight), qsec (1/4 mile time).\
+The remaining variables will be handled as factor variables : cyl (nb of cyl), vs (engine shape), am (auto/man transmission), gear (nb gears), carb (nb of carb).\
+
+```{r}
+# for convenience, We will work with a copy of the original data set
+my_mtcars <- mtcars
+```
+
+### Approach
+
+The first exploratory plots given in appendix 1 gives us some primary elements to answer the question. Box plot & distribution diagrams of mpg vs transmission mode (auto / man) tend to show lower mpg with automatic transmission and higher mpg with manual transmission.\
+The approach taken to answer our 2 initial questions will be to build a linear model with the mpg variable as a response variable and a set of regressors as inputs.  
+This model will provide us elements of interpretation to understand how the different regressors kept in our model can influence the miles per gallon concern.\
+
+
+### Collinearity Identification  
+  
+As a first step we will identify if there are strong evidences of high correlations between what would be our input variables.  
+
+```{r}
+mtcars %>% cor()
+```
+
+This correlation matrix allows us to identify strong correlations between the following variables :  
+cyl & disp, cyl & hp, cyl & vs, disp & wt. With the support of the plot of appendix 1 (pair plots including those 4 variables), decision is taken to suppress the cyl & disp variables as they are highly correlated with hp, ws and vs. This makes sense because bigger cars will have bigger engines with more cylinders... The other variables will be kept because they can contribute to explain variability in the model.\
+
+### Model definition
+
+In this step, we will fit a set of models by conducting a forward approach (step by step approach with new variables added at each step). Note that as stated above thanks to the correlation analysis, disp & cyl variables will not be embedded into our model. Considering, moderate correlation values between our response variable and qsec, gear and carb, we will not consider those variables as well.\
+mpg will be our response variable and as our questions are related to the impact of transmission mode, the am variable will be embedded in each instance of the model. Our categorical variables will be dealt as factors. Anova will be applied to select the best model (nested likelihood ratio tests).\
+
+```{r}
+fit0 <- lm(mpg~factor(am),my_mtcars)
+fit1 <- lm(mpg~factor(am)+hp,my_mtcars)
+fit2 <- lm(mpg~factor(am)+drat,my_mtcars)
+fit3 <- lm(mpg~factor(am)+wt,my_mtcars)
+fit4 <- lm(mpg~factor(am)+factor(vs),my_mtcars)
+fit5 <- lm(mpg~factor(am)+hp+factor(vs),my_mtcars)
+fit6 <- lm(mpg~factor(am)+hp+factor(vs)+drat+wt,my_mtcars)
+
+anova(fit0,fit5)
+```
+Here, we control the evolution of the coefficient associated to the "am" variable.
+
+```{r}
+rbind(summary(fit0)$coef[2,],
+      summary(fit1)$coef[2,],
+      summary(fit2)$coef[2,],
+      summary(fit3)$coef[2,],
+      summary(fit4)$coef[2,],
+      summary(fit5)$coef[2,],
+      summary(fit6)$coef[2,])
+```
+
+Finally we select fit5 as our best model as this model is the one which minimizes the std. Error for the coefficient associated to the am variable. Diagnosis elements associated to the model are given in appendix number 3 and allow us to conclude that the model fit appears to be valid.\
+
+
+### INTERPRETATIONS  
+
+The coefficients of the model can be interpreted as follow :\
+- On average, with other variables being fixed, compared to an automatic transmission, manual transmission increases mpg by 5.29. This value is statistically significant as the Pr associated to this coefficient is < to 0.05  
+
+
+The confidence interval associated to the coefficient (manual transmission) is estimated below :  
+
+```{r}
+confint(fit5)[2,]
+```
+
+As this confidence interval doesn't include zero, We can conclude that manual transmission mode is more efficient than automatic transmission !
+
+
+
+## Appendixes - Plots
+
+### Appendix 1 - EDA mpg ~ auto / manu transmission
+
+The main concern is related to identification of links between transmission mode (auto / manu) and mpg. This plot is used to visualize mpg distributions vs transmission categories.  
+
+```{r}
+ggplot(my_mtcars)+
+  geom_boxplot(mapping = aes (x=am,y=mpg, fill = am))+
+  ggtitle("Miles par gallon per Transmission 0 = auto / 1 = man")
+```
+
+```{r}
+ggplot(my_mtcars)+
+  geom_histogram(mapping = aes (mpg, fill = am),bins=12)+
+  ggtitle("Miles par gallon per Transmission 0 = auto / 1 = man")
+```
+
+
+### Appendix 2 - pair plots
+
+```{r}
+# Function used to dispkay correlation coefficients on pair plots  
+panel.cor <- function(x, y, ...)
+{
+par(usr = c(0, 1, 0, 1))
+txt <- as.character(format(cor(x, y), digits=2))
+text(0.5, 0.5, txt, cex = 3* abs(cor(x, y)))
+}
+
+my_mtcars %>% select (cyl,disp,hp,wt,vs) %>% pairs(lower.panel=panel.cor,pch = 19)
+```
+
+
+### Appendix 3 - Model Diagnosis
+
+As we selected model fit5 as our best model, let's perform some diagnosis plots.  
+
+#### Normality condition for the residuals  
+
+```{r}
+qqnorm(fit5$residuals)
+qqline(fit5$residuals)
+```
+
+The normality condition is satisfied.\
+
+```{r}
+# Valeurs absolues  
+plot((fit5$residuals) ~ fit5$fitted, xlab ="fitted data", ylab="residuals")
+```
+
+The constant variability of the residuals versus the fitted data condition is satisfied.
+
+

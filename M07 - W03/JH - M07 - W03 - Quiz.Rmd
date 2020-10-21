@@ -27,6 +27,7 @@ data("mtcars")
 ```{r}
 my_model <- lm(mpg~wt+factor(cyl), data=mtcars)
 summary(my_model)
+
 ```
 
 This answer will be -6.07
@@ -47,8 +48,100 @@ summary(my_model2)
 
 Consider the mtcars\verb|mtcars|mtcars data set. Fit a model with mpg as the outcome that considers number of cylinders as a factor variable and weight as confounder. Now fit a second model with mpg as the outcome model that considers the interaction between number of cylinders (as a factor variable) and weight. Give the P-value for the likelihood ratio test comparing the two models and suggest a model using 0.05 as a type I error rate significance benchmark.
 
+```{r}
+# Interaction  
+my_model3 <- lm(mpg~wt+factor(cyl)+factor(cyl)*wt,data=mtcars)
+summary(my_model3)
+```
+
+Likelihood ratio test for comparing the 2 models.  
+One particular model selection technique is so useful I’ll cover it since it likely wouldn’t be covered
+in a machine learning or prediction class.  
+If the models of interest are nested and without lots of parameters differentiating them, it’s fairly uncontroversial to use nested likelihood ratio tests for model selection.  
+
+```{r}
+anova(my_model, my_model3)
+```
+
+The p-value is higher than 0.05. So we will fail to reject & consider that the adjustment term is not necessary.  
 
 
+## QUESTION 4  
+
+Consider the mtcars\verb|mtcars|mtcars data set. Fit a model with mpg as the outcome that includes number of cylinders as a factor variable and weight inlcuded in the model.  
+
+```{r}
+my_model4 <- lm(mpg ~ I(wt * 0.5) + factor(cyl), data = mtcars)
+summary(my_model4)
+```
+
+This estimate the mpg increase per helf ton increase.  
+  
+  
+## QUESTION 5  
+
+```{r}
+x <- c(0.586, 0.166, -0.042, -0.614, 11.72)
+y <- c(0.549, -0.026, -0.127, -0.751, 1.344)
+my_model5 <- lm(y~x)
+```
+  
+Leverage is largely measured by one quantity, so called hat diagonals, which can be obtained in
+R by the function hatvalues. The hat values are necessarily between 0 and 1 with larger values
+indicating greater (potential for) leverage.  
+
+```{r}
+hatvalues(my_model5)
+```
+
+The highest value indicates a greater potential for leverage  
 
 
+## QUESTION 6  
+
+Give the slope dfbeta for the point with the highest hat value.  
+
+```{r}
+dfbetas(my_model5)
+```
+
+The point with the highest hatvalue is linked to a dfbetas involving a change of -134 in slope.  
+
+
+## SWISS DATA SET  
+
+```{r}
+require(datasets)
+data(swiss)
+
+```
+
+Let's see the result on calling lm on this data set related to fertility  
+
+```{r}
+swiss_model <- lm(Fertility ~ ., data = swiss)
+summary(swiss_model)
+```
+
+
+Our model estimates an expected 0.17 decrease in standardized fertility for every 1% increase in
+percentage of males involved in agriculture, holding the remaining variables constant.
+
+Let's focuss on the unadjusted estimate  
+
+```{r}
+summary(lm(Fertility ~ Agriculture,data=swiss))
+```
+
+Notice that the sign of the slope estimate reversed! This is an example of so-called “Simpson’s
+Paradox”. This purported paradox (which is actually not a paradox at all) simply points out that
+unadjusted and adjusted effects can be the reverse of each other. Or in other words, the apparent
+relationship between X and Y may change if we account for Z. Let’s explore multivariate adjustment
+and sign reversals with simulation.
+
+
+```{r}
+my_model_10 <- lm(mpg~.,data=mtcars)
+summary(my_model_10)
+```
 
