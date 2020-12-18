@@ -1,0 +1,220 @@
+---
+title: "JH - M08 - W02"
+author: "shostiou"
+date: "18/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## QUIZZ
+
+### Question1 - Creating a partition
+
+```{r, echo=FALSE}
+library(AppliedPredictiveModeling)
+data(AlzheimerDisease)
+```
+
+Loading the Caret package
+
+```{r, echo=FALSE}
+library(caret)
+library(tidyverse)
+```
+
+
+
+```{r}
+adData = data.frame(diagnosis,predictors)
+trainIndex = createDataPartition(diagnosis, p = 0.50,list=FALSE)
+training = adData[trainIndex,]
+testing = adData[-trainIndex,]
+```
+
+### Question 2 - Cement data
+
+```{r}
+library(AppliedPredictiveModeling)
+data(concrete)
+library(caret)
+set.seed(1000)
+inTrain = createDataPartition(mixtures$CompressiveStrength, p = 3/4)[[1]]
+training = mixtures[ inTrain,]
+testing = mixtures[-inTrain,]
+```
+
+Make a plot of the outcome (CompressiveStrength) versus the index of the samples. Color by each of the variables in the data set (you may find the cut2() function in the Hmisc package useful for turning continuous covariates into factors). What do you notice in these plots?   
+
+
+```{r}
+str(mixtures)
+```
+
+Let's do some summary
+
+```{r}
+summary(mixtures)
+```
+
+As specified in the instructions, we will turn the continuous variables to factor variables thanks to the cut2 function
+
+```{r, echo=FALSE}
+library(Hmisc)
+```
+
+```{r}
+# Getting index
+id <- 1:nrow(mixtures)
+# ggplot
+ggplot(mixtures)+
+  geom_point(mapping = aes(x=id,y=CompressiveStrength,color=cut2(Cement)))
+
+ggplot(mixtures)+
+  geom_point(mapping = aes(x=id,y=CompressiveStrength,color=cut2(BlastFurnaceSlag)))
+
+ggplot(mixtures)+
+  geom_point(mapping = aes(x=id,y=CompressiveStrength,color=cut2(FlyAsh)))
+
+ggplot(mixtures)+
+  geom_point(mapping = aes(x=id,y=CompressiveStrength,color=cut2(Water)))
+
+ggplot(mixtures)+
+  geom_point(mapping = aes(x=id,y=CompressiveStrength,color=cut2(Superplasticizer)))
+
+ggplot(mixtures)+
+  geom_point(mapping = aes(x=id,y=CompressiveStrength,color=cut2(CoarseAggregate)))
+
+ggplot(mixtures)+
+  geom_point(mapping = aes(x=id,y=CompressiveStrength,color=cut2(FineAggregate)))
+
+ggplot(mixtures)+
+  geom_point(mapping = aes(x=id,y=CompressiveStrength,color=cut2(Age)))
+
+
+
+```
+
+
+```{r}
+ggplot(mixtures)+
+  geom_point(mapping = aes(x=Age,y=CompressiveStrength))
+```
+
+### Question 3  
+
+```{r}
+library(AppliedPredictiveModeling)
+data(concrete)
+library(caret)
+set.seed(1000)
+inTrain = createDataPartition(mixtures$CompressiveStrength, p = 3/4)[[1]]
+training = mixtures[ inTrain,]
+testing = mixtures[-inTrain,]
+```
+
+Make a histogram and confirm the SuperPlasticizer variable is skewed. Normally you might use the log transform to try to make the data more symmetric. Why would that be a poor choice for this variable?
+
+
+```{r}
+ggplot(training)+
+  geom_histogram(mapping=(aes (x=log(Superplasticizer))))
+```
+
+### Question 4
+
+```{r}
+library(caret)
+library(AppliedPredictiveModeling)
+set.seed(3433)
+data(AlzheimerDisease)
+adData = data.frame(diagnosis,predictors)
+inTrain = createDataPartition(adData$diagnosis, p = 3/4)[[1]]
+training = adData[ inTrain,]
+testing = adData[-inTrain,]
+```
+
+Find all the predictor variables in the training set that begin with IL. Perform principal components on these variables with the preProcess() function from the caret package. Calculate the number of principal components needed to capture 90% of the variance. How many are there?
+
+
+```{r}
+train_IL <- training %>% select(starts_with('IL'))
+```
+
+Applying PCA  
+
+```{r}
+PreProc <- preProcess(train_IL,method="pca",thresh=0.9)
+```
+
+```{r}
+PreProc
+```
+
+
+
+### Question 5
+
+
+```{r}
+library(caret)
+library(AppliedPredictiveModeling)
+set.seed(3433)
+data(AlzheimerDisease)
+adData = data.frame(diagnosis,predictors)
+inTrain = createDataPartition(adData$diagnosis, p = 3/4)[[1]]
+training = adData[ inTrain,]
+testing = adData[-inTrain,]
+```
+
+Create a training data set consisting of only the predictors with variable names beginning with IL and the diagnosis. Build two predictive models, one using the predictors as they are and one using PCA with principal components explaining 80% of the variance in the predictors. Use method="glm" in the train function. 
+
+```{r}
+train_IL <- training %>% select(diagnosis,starts_with('IL'))
+PreProc <- train_IL %>% select(-diagnosis) %>% 
+  preProcess(method="pca",thresh=0.8)
+```
+
+The PCA retained 7 variables on the 12.
+
+Let's train the models then.   
+
+```{r}
+ModFitall <- train(diagnosis~ . ,data=train_IL,method="glm") 
+```
+
+So the idea is that if you get a new observation you have to predict what the principle component will look like for that new variable. So we pass this pre-processed object and the data set, to the predict function and that gives us the principle component.
+
+```{r}
+trainPC <- predict(PreProc,train_IL[,-1])
+trainPC <- trainPC %>% mutate(diagnosis = train_IL$diagnosis)
+```
+
+Note that above, the response variable was added into the diagnosis column.
+
+```{r}
+ModFitPCA <- train(diagnosis ~ . ,data=trainPC,method="glm") 
+```
+
+Now that our models are built, we can apply them to the test set.  
+
+```{r}
+# Test set wil only IL variables  
+test_IL <- testing %>% select(diagnosis,starts_with('IL'))
+test_IL_IN <- test_IL %>% select(-diagnosis)
+# Full Model
+print('*** FULL MODEL ***')
+confusionMatrix(test_IL$diagnosis,predict(ModFitall,test_IL_IN))
+# PCA Model
+print('*** PCA MODEL ***')
+testPC <- predict(PreProc,test_IL_IN)
+confusionMatrix(test_IL$diagnosis,predict(ModFitPCA,testPC))
+
+
+
+```
+
+
+
