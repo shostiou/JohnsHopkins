@@ -1,0 +1,371 @@
+---
+title: "JH - M08 - W04"
+author: "shostiou"
+date: "07/01/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Week 04 - Quizz
+
+### Loading libraries
+
+```{r}
+library(tidyr)
+#library(ElemStatLearn)
+```
+
+```{r}
+# Download package tarball from CRAN archive
+
+url <- "https://cran.r-project.org/src/contrib/Archive/ElemStatLearn/ElemStatLearn_2015.6.26.tar.gz"
+pkgFile <- "lemStatLearn_2015.6.26.tar.gz"
+download.file(url = url, destfile = pkgFile)
+
+
+# Install package
+install.packages(pkgs=pkgFile, type="source", repos=NULL)
+
+# Delete package tarball
+unlink(pkgFile)
+```
+ 
+```{r}
+library(ElemStatLearn)
+```
+ 
+```{r}
+data(vowel.train)
+data(vowel.test)
+```
+ 
+ 
+```{r}
+library(caret)
+```
+ 
+ 
+### Question 1 
+
+Set the variable y to be a factor variable in both the training and test set. Then set the seed to 33833. Fit (1) a random forest predictor relating the factor variable y to the remaining variables and (2) a boosted predictor using the "gbm" method. Fit these both with the train() command in the caret package. 
+
+```{r}
+vowel.train$y <- as.factor(vowel.train$y)
+vowel.test$y <- as.factor(vowel.test$y)
+```
+
+```{r}
+set.seed(33833)
+```
+ 
+ Training
+ 
+```{r}
+modFit_RF <- train(y ~ ., data = vowel.train, method = "rf", prox=TRUE)
+modFit_Boost <- train(y ~ ., data = vowel.train, method = "gbm", verbose=FALSE)
+
+```
+ 
+
+```{r}
+pred_RF <- predict(modFit_RF,newdata = vowel.test)
+confusionMatrix(pred_RF,vowel.test$y)
+```
+
+
+
+```{r}
+pred_Boost <- predict(modFit_Boost,newdata = vowel.test)
+confusionMatrix(pred_Boost,vowel.test$y)
+```
+
+Comparing the results of the 2 models  
+
+
+```{r}
+confusionMatrix(pred_Boost,pred_RF)
+```
+
+## Question 2  
+
+
+Load the Alzheimer's data using the following commands
+
+```{r}
+library(caret)
+
+library(gbm)
+
+set.seed(3433)
+
+library(AppliedPredictiveModeling)
+
+data(AlzheimerDisease)
+
+adData = data.frame(diagnosis,predictors)
+
+inTrain = createDataPartition(adData$diagnosis, p = 3/4)[[1]]
+
+training = adData[ inTrain,]
+
+testing = adData[-inTrain,]
+```
+
+Set the seed to 62433 and predict diagnosis with all the other variables using a random forest ("rf"), boosted trees ("gbm") and linear discriminant analysis ("lda") model. Stack the predictions together using random forests ("rf"). What is the resulting accuracy on the test set? Is it better or worse than each of the individual predictions? 
+
+Training individual models  
+
+Turning diagnosis as factor
+
+```{r}
+training$diagnosis <- as.factor(training$diagnosis)
+testing$diagnosis <- as.factor(testing$diagnosis)
+```
+
+
+
+```{r}
+set.seed(62433)
+mod_diag_rf <- train(diagnosis ~ ., data=training,method="rf" )
+mod_diag_gbm <- train(diagnosis ~ ., data=training,method="gbm" )
+mod_diag_lda <- train(diagnosis ~ ., data=training,method="lda" )
+
+```
+
+```{r}
+pred_rf <- predict(mod_diag_rf,newdata = testing)
+pred_gbm <- predict(mod_diag_gbm,newdata = testing)
+pred_lda <- predict(mod_diag_lda,newdata = testing)
+
+
+
+```
+
+Confusion Matrix
+
+```{r}
+confusionMatrix(pred_rf,testing$diagnosis)
+```
+
+```{r}
+confusionMatrix(pred_gbm,testing$diagnosis)
+```
+
+
+```{r}
+confusionMatrix(pred_lda,testing$diagnosis)
+```
+
+Ensemble learning  
+
+
+
+```{r}
+# Dataframe consiting of the predictors of the models.  
+predDF <- data.frame(pred_rf,pred_gbm,pred_lda,diagnosis=testing$diagnosis)
+
+
+```
+
+```{r}
+combModFit <- train(diagnosis ~ .,data=predDF, method="rf" )
+```
+
+Prediction on the test set
+
+```{r}
+ens_pred <- predict(combModFit,predDF)
+```
+
+Confusion Matrix
+
+```{r}
+confusionMatrix(ens_pred,testing$diagnosis)
+```
+
+With an accuracy of 0?93, it is better than the 3 single models.  
+
+
+## Question 3 
+
+Load the concrete data with the commands:
+
+
+```{r}
+set.seed(3523)
+
+library(AppliedPredictiveModeling)
+
+data(concrete)
+
+inTrain = createDataPartition(concrete$CompressiveStrength, p = 3/4)[[1]]
+
+training = concrete[ inTrain,]
+
+testing = concrete[-inTrain,]
+```
+
+Set the seed to 233 and fit a lasso model to predict Compressive Strength. Which variable is the last coefficient to be set to zero as the penalty increases? (Hint: it may be useful to look up ?plot.enet). 
+
+```{r}
+set.seed(233)
+```
+
+lasso 
+
+```{r}
+x_data_training <- training %>% select(-CompressiveStrength)
+```
+
+
+
+```{r}
+lambdas <- 10^{seq(from = -2, to = 5, length = 100)}
+lasso<-train(y= training$CompressiveStrength,
+                 x = x_data_training,
+                 method = 'glmnet', 
+                 tuneGrid = expand.grid(alpha = 1, lambda = lambdas)
+           
+               ) 
+
+```
+
+```{r}
+library(caret)
+fit <- train(CompressiveStrength ~ ., data = training, method = "lasso")
+plot(fit$finalModel, use.color=T)
+```
+
+
+
+```{r}
+library(glmnet)
+```
+
+
+```{r}
+lafit <- glmnet(x_data_training, training$CompressiveStrength, alpha = 1, lambda = lambdas)
+plot(lafit, xvar = "lambda")
+```
+
+
+## Question 4 
+
+Question 4
+Load the data on the number of visitors to the instructors blog from here: 
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/gaData.csv
+
+
+```{r}
+library(lubridate) # For year() function below
+
+dat = read.csv("gaData.csv")
+
+training = dat[year(dat$date) < 2012,]
+
+testing = dat[(year(dat$date)) > 2011,]
+
+tstrain = ts(training$visitsTumblr)
+```
+
+BATS Model (Exponential Smoothing State Space Model With Box-Cox Transformation, ARMA Errors, Trend And Seasonal Components)
+
+```{r}
+tstesting = ts(testing$visitsTumblr)
+```
+
+```{r}
+library(forecast)
+```
+
+
+```{r}
+
+fit <- bats(tstrain)
+fc <- forecast(fit, 235, level=c(95))
+
+```
+
+```{r}
+library(dplyr)
+```
+
+
+```{r}
+fc$test <- testing$visitsTumblr
+```
+
+```{r}
+testing$lower <- as.numeric(fc$lower)
+testing$upper <- as.numeric(fc$upper)
+```
+
+```{r}
+testing %>% filter(visitsTumblr >=lower & visitsTumblr <=upper) %>% nrow()
+```
+
+```{r}
+226/235
+```
+
+
+## Question 5
+
+Load the concrete data with the commands:
+
+```{r}
+RNGversion("3.5.1")
+
+set.seed(3523)
+
+library(AppliedPredictiveModeling)
+
+data(concrete)
+
+inTrain = createDataPartition(concrete$CompressiveStrength, p = 3/4)[[1]]
+
+training = concrete[ inTrain,]
+
+testing = concrete[-inTrain,]
+```
+
+
+Set the seed to 325 and fit a support vector machine using the e1071 package to predict Compressive Strength using the default settings. Predict on the testing set. What is the RMSE? 
+
+```{r}
+library(e1071)
+```
+
+
+```{r}
+set.seed(325)
+```
+
+```{r}
+concrete.svm = svm(CompressiveStrength ~ ., data = training)
+
+```
+
+```{r}
+#Presdiction on test set
+concrete_pred <- predict(concrete.svm,newdata = testing)
+
+```
+
+Root Mean Squared Error
+
+```{r}
+library(Metrics)
+rmse(testing$CompressiveStrength,concrete_pred)
+```
+
+```{r}
+sqrt(sum((concrete_pred - testing$CompressiveStrength)^2)/length(testing$CompressiveStrength))
+```
+
+
+
