@@ -1,0 +1,331 @@
+---
+title: "JH - M08 - W03"
+author: "S. Hostiou"
+date: "18/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(caret)
+library(rpart)
+library(randomForest)
+```
+
+
+
+## INTRODUCTION
+
+This Notebook is a companion to the course. USed to run the examples introduced during the course (Module 08 - Week 03 of the Johns Hopkins data science specialisation)
+
+### Trees  
+
+This section will be using the Iris Data set to illustrate how to build classification trees.
+
+```{r}
+data("iris")
+names(iris)
+table(iris$Species)
+```
+
+Creating Training and Test sets
+
+```{r}
+inTrain <- createDataPartition(y=iris$Species,p=0.7,list=FALSE)
+training <- iris[inTrain,]
+testing <- iris[-inTrain,]
+dim(training)
+dim(testing)
+```
+Visualisation of the data
+
+```{r}
+ggplot(training) +
+  geom_point(mapping = aes(x=Petal.Width,y=Sepal.Width,color=Species))
+```
+
+Fitting a model with the Caret package
+
+```{r}
+modFit <- train(Species ~ ., method="rpart",data = training)
+```
+
+Plotting the result
+
+```{r}
+plot(modFit$finalModel, uniform = TRUE,main="Classification Tree")
+text(modFit$finalModel,use.n=TRUE,all=TRUE,cex=0.8)
+```
+
+Better representation
+
+```{r}
+library(rattle)
+fancyRpartPlot(modFit$finalModel)
+
+```
+
+
+### Random Forest
+
+Let's train a new model which will be using Random Forest this time.
+
+```{r}
+modFit <- train(Species ~ ., method="rf",data = training,prox=TRUE)
+```
+
+Now lets' visualize the structure of the model
+
+```{r}
+modFit
+```
+
+Let's focus on a single Tree
+
+```{r}
+getTree(modFit$finalModel,k=2)
+```
+
+
+
+# QUIZ FOR WEEK 03
+
+Let's start by loading the library and the data
+
+```{r}
+library(AppliedPredictiveModeling)
+data(segmentationOriginal)
+library(caret)
+```
+
+Installation of older packages otherwise, no link with the questions...
+
+AppliedPredictiveModeling: v1.1.6
+caret: v6.0.47
+
+ElemStatLearn: v2012.04-0
+
+pgmm: v1.1
+
+rpart: v4.1.8
+
+
+
+require(devtools)
+install_version("AppliedPredictiveModeling", version = "1.1.6", repos = "http://cran.us.r-project.org")
+install_version("ElemStatLearn", version = "2012.04-0", repos = "http://cran.us.r-project.org")
+install_version("pgmm", version = "1.1", repos = "https://cran.r-project.org/")
+install_version("rpart", version = "4.1.8", repos = "https://cran.r-project.org/")
+
+
+
+1. Subset the data to a training set and testing set based on the Case variable in the data set. 
+The subset is already existing in the dataset.
+
+```{r}
+#subset <- split(segmentationOriginal, segmentationOriginal$Case)
+#training <- subset$Train
+#testing <- subset$Test
+
+training <- segmentationOriginal %>% filter (Case=='Train') %>% select(-Case)
+testing <- segmentationOriginal %>% filter (Case=='Test') %>% select(-Case)
+
+
+```
+
+
+2. Set the seed to 125 and fit a CART model with the rpart method using all predictor variables and default caret settings. 
+
+"Classification and regression tree" apparently. I do not see this acronym anywhere in the lectures although the phrase appears as a link at the end of "Predicting with Trees."
+
+```{r}
+set.seed(125)
+#CART_mod <- train(Class ~ . ,method="rpart",data=training)
+CART_mod <- train(Class ~ . ,method="rpart",data=training)
+```
+
+3. In the final model what would be the final model prediction for cases with the following variable values:
+
+a. TotalIntench2 = 23,000; FiberWidthCh1 = 10; PerimStatusCh1=2 
+
+b. TotalIntench2 = 50,000; FiberWidthCh1 = 10;VarIntenCh4 = 100 
+
+c. TotalIntench2 = 57,000; FiberWidthCh1 = 8;VarIntenCh4 = 100 
+
+d. FiberWidthCh1 = 8;VarIntenCh4 = 100; PerimStatusCh1=2 
+
+
+```{r}
+print(CART_mod$finalModel)
+```
+
+
+
+```{r}
+
+# New Data 1
+new_data_01 <- training[0,]
+new_data_01[1,c("TotalIntenCh2", "FiberWidthCh1", "VarIntenCh4","PerimStatusCh1")] <- c(23000, 10, NA,2)
+predict(CART_mod$finalModel, newdata = new_data_01)
+# PS
+
+# New Data 2
+new_data_02 <- training[0,]
+new_data_02[1,c("TotalIntenCh2", "FiberWidthCh1", "VarIntenCh4","PerimStatusCh1")] <- c(50000, 10, 100,NA)
+predict(CART_mod$finalModel, newdata = new_data_02)
+# WS
+
+
+# New Data 3
+new_data_03 <- training[0,]
+new_data_03[1,c("TotalIntenCh2", "FiberWidthCh1", "VarIntenCh4","PerimStatusCh1")] <- c(57000, 8, 100,NA)
+predict(CART_mod$finalModel, newdata = new_data_03)
+# PS
+
+# New Data 4
+new_data_04 <- training[0,]
+new_data_04[1,c("TotalIntenCh2","FiberWidthCh1", "VarIntenCh4", "PerimStatusCh1")] <- c(NA,8, 100, 2)
+predict(CART_mod$finalModel, newdata = new_data_04)
+# No Pred
+
+
+```
+
+### Question 3
+
+```{r}
+olive = olive[,-1]
+```
+
+These data contain information on 572 different Italian olive oils from multiple regions in Italy. Fit a classification tree where Area is the outcome variable. Then predict the value of area for the following data frame using the tree command with all defaults
+
+newdata = as.data.frame(t(colMeans(olive)))
+
+```{r}
+olive_mod <- train(Area ~ . ,method="rpart",data=olive)
+```
+
+```{r}
+newdata = as.data.frame(t(colMeans(olive)))
+predict(olive_mod, newdata = newdata)
+```
+2.783. It is strange because Area should be a qualitative variable - but tree is reporting the average value of Area as a numeric variable in the leaf predicted for newdata
+
+
+### Question 4
+
+Load the South Africa Heart Disease Data and create training and test sets with the following code:
+
+```{r}
+library(ElemStatLearn)
+data(SAheart)
+set.seed(8484)
+train = sample(1:dim(SAheart)[1],size=dim(SAheart)[1]/2,replace=F)
+trainSA = SAheart[train,]
+testSA = SAheart[-train,]
+
+```
+
+Then set the seed to 13234 and fit a logistic regression model  (method="glm", be sure to specify family="binomial") with Coronary Heart Disease (chd) as the outcome and age at onset, current alcohol consumption, obesity levels, cumulative tabacco, type-A behavior, and low density lipoprotein cholesterol as predictors. Calculate the misclassification rate for your model using this function and a prediction on the "response" scale:
+
+Due to the fact that the variable has only 2 levels, it is necessary to convert it to factor.
+
+```{r}
+#trainSA$chd <- as.factor(trainSA$chd)
+#testSA$chd <- as.factor(testSA$chd)
+
+```
+
+Training the model
+
+```{r}
+set.seed(13234)
+chd_model <- train(chd ~ age + alcohol + obesity + tobacco + typea + ldl, method='glm',family='binomial',data=trainSA)
+```
+
+Function to compute missclassification
+
+```{r}
+missClass = function(values,prediction){sum(((prediction > 0.5)*1) != values)/length(values)}
+```
+
+Calling the missclass function
+
+```{r}
+test_01 <- testSA %>% select(-chd)
+train_01 <-  trainSA %>% select(-chd)
+
+missClass(testSA$chd, predict(chd_model, newdata = test_01))
+missClass(trainSA$chd, predict(chd_model, newdata = train_01))
+
+```
+
+
+
+### Question 5
+
+Load the vowel.train and vowel.test data sets:
+
+
+```{r}
+library(ElemStatLearn)
+data(vowel.train)
+data(vowel.test)
+```
+
+Set the variable y to be a factor variable in both the training and test set. Then set the seed to 33833. Fit a random forest predictor relating the factor variable y to the remaining variables. Read about variable importance in random forests here:  http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm#ooberr The caret package uses by default the Gini importance. 
+
+```{r}
+vowel.train$y <- as.factor(vowel.train$y)
+vowel.test$y <- as.factor(vowel.test$y)
+set.seed(33833)
+```
+
+ Calculate the variable importance using the varImp function in the caret package. What is the order of variable importance?
+
+[NOTE: Use randomForest() specifically, not caret, as there's been some issues reported with that approach. 11/6/2016]
+
+```{r}
+library(randomForest)
+model1 <- randomForest(y ~ ., data = vowel.train, importance = TRUE)
+
+```
+
+```{r}
+model1
+
+```
+
+```{r}
+plot(model1)
+```
+
+```{r}
+varImpPlot(model1)
+```
+
+```{r}
+print(model1$importance)
+```
+```{r}
+model1
+```
+
+```{r}
+varImp(model1)
+```
+
+```{r}
+modRF <- train(y ~ ., data=vowel.train, method="rf")
+```
+
+
+```{r}
+varImp(modRF)
+```
+
