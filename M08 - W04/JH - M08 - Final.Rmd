@@ -10,14 +10,76 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Introduction
+## Project Instructions
 
 One thing that people regularly do is quantify how  much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants.
 
 The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.
 
-Remark  
-Your submission for the Peer Review portion should consist of a link to a Github repo with your R markdown and compiled HTML file describing your analysis. Please constrain the text of the writeup to < 2000 words and the number of figures to be less than 5. It will make it easier for the graders if you submit a repo with a gh-pages branch so the HTML page can be viewed online (and you always want to make it easy on graders :-).
+The classe variable is encoded as follow :  
+Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).
+
+
+
+## Project Environment setup
+
+Loading the required packages  
+```{r, message=FALSE,warning=FALSE}
+library(tidyverse)
+library(caret)
+library(lubridate)
+library(utils)
+library(tidyr)
+```
+
+Collecting training and testing sets
+
+```{r, message=FALSE,warning=FALSE}
+# reading the csv files from the links provided in the instructions
+training_csv <- download.file('https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv','training.csv')
+testing_csv <- download.file('https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv','testing.csv')
+# Building training & testing dataframes
+training_df <- read.csv('training.csv')
+testing_df <- read.csv('testing.csv')
+
+```
+
+
+## Basic exploration of the training set
+
+Let's start to have a look at the content of the training set
+
+The training set contains `r nrow(training_df)` observations of `r ncol(training_df)` variables.
+
+Using the str command to get a clearer overview of the data contained into the training set.
+
+```{r}
+str(training_df)
+```
+
+It appears that a lot variables seem to have NAs.
+We need to quantify this in order to select irrelevant variables.  
+The code below calculates what is the proportion of NAs for each variable
+
+```{r, warning=FALSE}
+training_na_pct <- training_df %>%
+  summarise_all(funs(sum(is.na(.)))) %>% mutate_all(funs(./nrow(training_df))) %>% 
+  t()
+```
+
+We can observe that a significant number of variables contain more than 97% NA values.  
+A pragmatic approach will be to ignore those variables.  
+
+```{r}
+training_na_pct[training_na_pct  > 0.9,]
+```
+
+There are `r  training_na_pct[training_na_pct  > 0.90,] %>% length() ` variables with a high proportion of NAs (superior to 90% of NAs)
+
+
+
+
+
 
 **Background**
 Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
