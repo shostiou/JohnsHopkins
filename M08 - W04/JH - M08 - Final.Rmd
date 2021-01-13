@@ -57,6 +57,8 @@ Using the str command to get a clearer overview of the data contained into the t
 str(training_df)
 ```
 
+### Dealing with NAs
+
 It appears that a lot variables seem to have NAs.
 We need to quantify this in order to select irrelevant variables.  
 The code below calculates what is the proportion of NAs for each variable
@@ -71,12 +73,52 @@ We can observe that a significant number of variables contain more than 97% NA v
 A pragmatic approach will be to ignore those variables.  
 
 ```{r}
-training_na_pct[training_na_pct  > 0.9,]
+irrelevant_var <- names(training_na_pct[training_na_pct  > 0.9,])
+irrelevant_var
 ```
 
 There are `r  training_na_pct[training_na_pct  > 0.90,] %>% length() ` variables with a high proportion of NAs (superior to 90% of NAs)
 
+A reasonable approach consists in removing those irrelevant variables.  
 
+```{r}
+training_df_01 <- training_df %>% select(-c(irrelevant_var))
+```
+
+
+This new training set contains `r nrow(training_df_01)` observations of `r ncol(training_df_01)` variables.
+
+Next step is to identify variables having no content (encoded as "" which corresponds to no value and shall have been encoded as NA)
+
+
+```{r}
+trainin_empty_pct <- training_df_01 %>%
+ summarise_all(~sum(.=="")) %>% mutate_all(funs(./nrow(training_df_01))) %>% 
+  t()
+```
+
+
+
+### Dealing with empty values
+
+We can observe that a significant number of variables contain more than 97% "empty" values which shall have been encoded as NAs.  
+A pragmatic approach will be to ignore those variables.  
+
+
+```{r}
+irrelevant_var_02 <- names(trainin_empty_pct[trainin_empty_pct  > 0.9,])
+irrelevant_var_02
+```
+
+There are `r  trainin_empty_pct[trainin_empty_pct  > 0.90,] %>% length() ` variables with a high proportion of empty values (superior to 90% of empty values)
+
+A reasonable approach consists in removing those irrelevant variables.  
+
+```{r}
+training_df_02 <- training_df_01 %>% select(-irrelevant_var_02)
+```
+
+This new training set contains `r nrow(training_df_02)` observations of `r ncol(training_df_02)` variables.
 
 
 

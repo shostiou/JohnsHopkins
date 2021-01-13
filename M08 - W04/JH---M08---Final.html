@@ -548,6 +548,8 @@ testing_df &lt;- read.csv(&#39;testing.csv&#39;)</code></pre>
 ##  $ min_yaw_dumbbell        : Factor w/ 73 levels &quot;&quot;,&quot;-0.1&quot;,&quot;-0.2&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
 ##  $ amplitude_roll_dumbbell : num  NA NA NA NA NA NA NA NA NA NA ...
 ##   [list output truncated]</code></pre>
+<div id="dealing-with-nas" class="section level3">
+<h3>Dealing with NAs</h3>
 <p>It appears that a lot variables seem to have NAs. We need to quantify this in order to select irrelevant variables.<br />
 The code below calculates what is the proportion of NAs for each variable</p>
 <pre class="r"><code>training_na_pct &lt;- training_df %&gt;%
@@ -555,54 +557,86 @@ The code below calculates what is the proportion of NAs for each variable</p>
   t()</code></pre>
 <p>We can observe that a significant number of variables contain more than 97% NA values.<br />
 A pragmatic approach will be to ignore those variables.</p>
-<pre class="r"><code>training_na_pct[training_na_pct  &gt; 0.9,]</code></pre>
-<pre><code>##            max_roll_belt           max_picth_belt            min_roll_belt 
-##                0.9793089                0.9793089                0.9793089 
-##           min_pitch_belt      amplitude_roll_belt     amplitude_pitch_belt 
-##                0.9793089                0.9793089                0.9793089 
-##     var_total_accel_belt            avg_roll_belt         stddev_roll_belt 
-##                0.9793089                0.9793089                0.9793089 
-##            var_roll_belt           avg_pitch_belt        stddev_pitch_belt 
-##                0.9793089                0.9793089                0.9793089 
-##           var_pitch_belt             avg_yaw_belt          stddev_yaw_belt 
-##                0.9793089                0.9793089                0.9793089 
-##             var_yaw_belt            var_accel_arm             avg_roll_arm 
-##                0.9793089                0.9793089                0.9793089 
-##          stddev_roll_arm             var_roll_arm            avg_pitch_arm 
-##                0.9793089                0.9793089                0.9793089 
-##         stddev_pitch_arm            var_pitch_arm              avg_yaw_arm 
-##                0.9793089                0.9793089                0.9793089 
-##           stddev_yaw_arm              var_yaw_arm             max_roll_arm 
-##                0.9793089                0.9793089                0.9793089 
-##            max_picth_arm              max_yaw_arm             min_roll_arm 
-##                0.9793089                0.9793089                0.9793089 
-##            min_pitch_arm              min_yaw_arm       amplitude_roll_arm 
-##                0.9793089                0.9793089                0.9793089 
-##      amplitude_pitch_arm        amplitude_yaw_arm        max_roll_dumbbell 
-##                0.9793089                0.9793089                0.9793089 
-##       max_picth_dumbbell        min_roll_dumbbell       min_pitch_dumbbell 
-##                0.9793089                0.9793089                0.9793089 
-##  amplitude_roll_dumbbell amplitude_pitch_dumbbell       var_accel_dumbbell 
-##                0.9793089                0.9793089                0.9793089 
-##        avg_roll_dumbbell     stddev_roll_dumbbell        var_roll_dumbbell 
-##                0.9793089                0.9793089                0.9793089 
-##       avg_pitch_dumbbell    stddev_pitch_dumbbell       var_pitch_dumbbell 
-##                0.9793089                0.9793089                0.9793089 
-##         avg_yaw_dumbbell      stddev_yaw_dumbbell         var_yaw_dumbbell 
-##                0.9793089                0.9793089                0.9793089 
-##         max_roll_forearm        max_picth_forearm         min_roll_forearm 
-##                0.9793089                0.9793089                0.9793089 
-##        min_pitch_forearm   amplitude_roll_forearm  amplitude_pitch_forearm 
-##                0.9793089                0.9793089                0.9793089 
-##        var_accel_forearm         avg_roll_forearm      stddev_roll_forearm 
-##                0.9793089                0.9793089                0.9793089 
-##         var_roll_forearm        avg_pitch_forearm     stddev_pitch_forearm 
-##                0.9793089                0.9793089                0.9793089 
-##        var_pitch_forearm          avg_yaw_forearm       stddev_yaw_forearm 
-##                0.9793089                0.9793089                0.9793089 
-##          var_yaw_forearm 
-##                0.9793089</code></pre>
+<pre class="r"><code>irrelevant_var &lt;- names(training_na_pct[training_na_pct  &gt; 0.9,])
+irrelevant_var</code></pre>
+<pre><code>##  [1] &quot;max_roll_belt&quot;            &quot;max_picth_belt&quot;          
+##  [3] &quot;min_roll_belt&quot;            &quot;min_pitch_belt&quot;          
+##  [5] &quot;amplitude_roll_belt&quot;      &quot;amplitude_pitch_belt&quot;    
+##  [7] &quot;var_total_accel_belt&quot;     &quot;avg_roll_belt&quot;           
+##  [9] &quot;stddev_roll_belt&quot;         &quot;var_roll_belt&quot;           
+## [11] &quot;avg_pitch_belt&quot;           &quot;stddev_pitch_belt&quot;       
+## [13] &quot;var_pitch_belt&quot;           &quot;avg_yaw_belt&quot;            
+## [15] &quot;stddev_yaw_belt&quot;          &quot;var_yaw_belt&quot;            
+## [17] &quot;var_accel_arm&quot;            &quot;avg_roll_arm&quot;            
+## [19] &quot;stddev_roll_arm&quot;          &quot;var_roll_arm&quot;            
+## [21] &quot;avg_pitch_arm&quot;            &quot;stddev_pitch_arm&quot;        
+## [23] &quot;var_pitch_arm&quot;            &quot;avg_yaw_arm&quot;             
+## [25] &quot;stddev_yaw_arm&quot;           &quot;var_yaw_arm&quot;             
+## [27] &quot;max_roll_arm&quot;             &quot;max_picth_arm&quot;           
+## [29] &quot;max_yaw_arm&quot;              &quot;min_roll_arm&quot;            
+## [31] &quot;min_pitch_arm&quot;            &quot;min_yaw_arm&quot;             
+## [33] &quot;amplitude_roll_arm&quot;       &quot;amplitude_pitch_arm&quot;     
+## [35] &quot;amplitude_yaw_arm&quot;        &quot;max_roll_dumbbell&quot;       
+## [37] &quot;max_picth_dumbbell&quot;       &quot;min_roll_dumbbell&quot;       
+## [39] &quot;min_pitch_dumbbell&quot;       &quot;amplitude_roll_dumbbell&quot; 
+## [41] &quot;amplitude_pitch_dumbbell&quot; &quot;var_accel_dumbbell&quot;      
+## [43] &quot;avg_roll_dumbbell&quot;        &quot;stddev_roll_dumbbell&quot;    
+## [45] &quot;var_roll_dumbbell&quot;        &quot;avg_pitch_dumbbell&quot;      
+## [47] &quot;stddev_pitch_dumbbell&quot;    &quot;var_pitch_dumbbell&quot;      
+## [49] &quot;avg_yaw_dumbbell&quot;         &quot;stddev_yaw_dumbbell&quot;     
+## [51] &quot;var_yaw_dumbbell&quot;         &quot;max_roll_forearm&quot;        
+## [53] &quot;max_picth_forearm&quot;        &quot;min_roll_forearm&quot;        
+## [55] &quot;min_pitch_forearm&quot;        &quot;amplitude_roll_forearm&quot;  
+## [57] &quot;amplitude_pitch_forearm&quot;  &quot;var_accel_forearm&quot;       
+## [59] &quot;avg_roll_forearm&quot;         &quot;stddev_roll_forearm&quot;     
+## [61] &quot;var_roll_forearm&quot;         &quot;avg_pitch_forearm&quot;       
+## [63] &quot;stddev_pitch_forearm&quot;     &quot;var_pitch_forearm&quot;       
+## [65] &quot;avg_yaw_forearm&quot;          &quot;stddev_yaw_forearm&quot;      
+## [67] &quot;var_yaw_forearm&quot;</code></pre>
 <p>There are 67 variables with a high proportion of NAs (superior to 90% of NAs)</p>
+<p>A reasonable approach consists in removing those irrelevant variables.</p>
+<pre class="r"><code>training_df_01 &lt;- training_df %&gt;% select(-c(irrelevant_var))</code></pre>
+<pre><code>## Note: Using an external vector in selections is ambiguous.
+## ℹ Use `all_of(irrelevant_var)` instead of `irrelevant_var` to silence this message.
+## ℹ See &lt;https://tidyselect.r-lib.org/reference/faq-external-vector.html&gt;.
+## This message is displayed once per session.</code></pre>
+<p>This new training set contains 19622 observations of 93 variables.</p>
+<p>Next step is to identify variables having no content (encoded as &quot;&quot; which corresponds to no value and shall have been encoded as NA)</p>
+<pre class="r"><code>trainin_empty_pct &lt;- training_df_01 %&gt;%
+ summarise_all(~sum(.==&quot;&quot;)) %&gt;% mutate_all(funs(./nrow(training_df_01))) %&gt;% 
+  t()</code></pre>
+</div>
+<div id="dealing-with-empty-values" class="section level3">
+<h3>Dealing with empty values</h3>
+<p>We can observe that a significant number of variables contain more than 97% “empty” values which shall have been encoded as NAs.<br />
+A pragmatic approach will be to ignore those variables.</p>
+<pre class="r"><code>irrelevant_var_02 &lt;- names(trainin_empty_pct[trainin_empty_pct  &gt; 0.9,])
+irrelevant_var_02</code></pre>
+<pre><code>##  [1] &quot;kurtosis_roll_belt&quot;      &quot;kurtosis_picth_belt&quot;    
+##  [3] &quot;kurtosis_yaw_belt&quot;       &quot;skewness_roll_belt&quot;     
+##  [5] &quot;skewness_roll_belt.1&quot;    &quot;skewness_yaw_belt&quot;      
+##  [7] &quot;max_yaw_belt&quot;            &quot;min_yaw_belt&quot;           
+##  [9] &quot;amplitude_yaw_belt&quot;      &quot;kurtosis_roll_arm&quot;      
+## [11] &quot;kurtosis_picth_arm&quot;      &quot;kurtosis_yaw_arm&quot;       
+## [13] &quot;skewness_roll_arm&quot;       &quot;skewness_pitch_arm&quot;     
+## [15] &quot;skewness_yaw_arm&quot;        &quot;kurtosis_roll_dumbbell&quot; 
+## [17] &quot;kurtosis_picth_dumbbell&quot; &quot;kurtosis_yaw_dumbbell&quot;  
+## [19] &quot;skewness_roll_dumbbell&quot;  &quot;skewness_pitch_dumbbell&quot;
+## [21] &quot;skewness_yaw_dumbbell&quot;   &quot;max_yaw_dumbbell&quot;       
+## [23] &quot;min_yaw_dumbbell&quot;        &quot;amplitude_yaw_dumbbell&quot; 
+## [25] &quot;kurtosis_roll_forearm&quot;   &quot;kurtosis_picth_forearm&quot; 
+## [27] &quot;kurtosis_yaw_forearm&quot;    &quot;skewness_roll_forearm&quot;  
+## [29] &quot;skewness_pitch_forearm&quot;  &quot;skewness_yaw_forearm&quot;   
+## [31] &quot;max_yaw_forearm&quot;         &quot;min_yaw_forearm&quot;        
+## [33] &quot;amplitude_yaw_forearm&quot;</code></pre>
+<p>There are 33 variables with a high proportion of empty values (superior to 90% of empty values)</p>
+<p>A reasonable approach consists in removing those irrelevant variables.</p>
+<pre class="r"><code>training_df_02 &lt;- training_df_01 %&gt;% select(-irrelevant_var_02)</code></pre>
+<pre><code>## Note: Using an external vector in selections is ambiguous.
+## ℹ Use `all_of(irrelevant_var_02)` instead of `irrelevant_var_02` to silence this message.
+## ℹ See &lt;https://tidyselect.r-lib.org/reference/faq-external-vector.html&gt;.
+## This message is displayed once per session.</code></pre>
+<p>This new training set contains 19622 observations of 60 variables.</p>
 <p><strong>Background</strong> Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: <a href="http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har" class="uri">http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har</a> (see the section on the Weight Lifting Exercise Dataset).</p>
 <p><strong>Data</strong> The training data for this project are available here:</p>
 <p><a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv" class="uri">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv</a></p>
@@ -618,6 +652,7 @@ A pragmatic approach will be to ignore those variables.</p>
 ##  Mean   :15.4   Mean   : 42.98  
 ##  3rd Qu.:19.0   3rd Qu.: 56.00  
 ##  Max.   :25.0   Max.   :120.00</code></pre>
+</div>
 </div>
 <div id="including-plots" class="section level2">
 <h2>Including Plots</h2>
