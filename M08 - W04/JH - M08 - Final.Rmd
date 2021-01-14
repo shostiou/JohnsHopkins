@@ -45,7 +45,7 @@ testing_df <- read.csv('testing.csv')
 ```
 
 
-## Basic exploration of the training set
+## Data Cleaning
 
 Let's start to have a look at the content of the training set
 
@@ -82,7 +82,7 @@ There are `r  training_na_pct[training_na_pct  > 0.90,] %>% length() ` variables
 A reasonable approach consists in removing those irrelevant variables.  
 
 ```{r}
-training_df_01 <- training_df %>% select(-c(irrelevant_var))
+training_df_01 <- training_df %>% select(-c(all_of(irrelevant_var)))
 ```
 
 
@@ -119,6 +119,103 @@ training_df_02 <- training_df_01 %>% select(-irrelevant_var_02)
 ```
 
 This new training set contains `r nrow(training_df_02)` observations of `r ncol(training_df_02)` variables.
+
+
+
+### Suppressing timestamp, user_name, X variables
+
+If we consider all observations as independent, then timestamp variables will only contribute to introduce bias into our model.   
+They need to be removed.  
+For the same bias control reason, we will exclude the user_name variable (otherwise, our model will not be able to generalize because it will be linked to a small sample of users appearing into the training set).  
+The X variable is just an index. It shall not be taken into account for defining our model.  
+
+```{r}
+# variables to be excluded
+to_be_excluded <- c('X','user_name','raw_timestamp_part_1','raw_timestamp_part_2','cvtd_timestamp')
+# Exclusion
+training_df_03 <- training_df_02 %>% select(-to_be_excluded)
+
+```
+
+
+### Near Zero Variability check  
+
+As introduced into the course, this check will be done thanks to the nearZeroVar function of the Caret package
+
+```{r}
+training_df_03 %>% select(-classe) %>% nearZeroVar(.,saveMetrics = TRUE) %>% filter(nzv ==TRUE)
+```
+
+The new_window variable can be removed as it has a near zero variability
+
+```{r}
+training_df_04 <- training_df_03 %>% select(-new_window) 
+```
+
+
+### Correlation between variables  
+
+The purpose here is to see if some variables are highly correlated in order to reduce the dimension of the model.  
+
+
+```{r}
+M <- training_df_04 %>% select(-classe) %>% cor() %>% abs()
+diag(M) <- 0
+corr_matrix <- which(M > 0.8,arr.ind=T) %>% as.data.frame()
+
+ggplot(corr_matrix) +
+  geom_point(mapping = aes(x=row,y=col)) +
+  ggtitle('Highly correlated rows & columns of the correlation matrix')
+
+```
+
+Let's visualize the relationship between 2 of those highly correlated variables  
+
+```{r}
+var1 <- corr_matrix$row[20]
+var2 <- corr_matrix$col[20]
+
+var1_col <- colnames(training_df_04[var1])
+var2_col <- colnames(training_df_04[var2])
+
+var1_col
+var2_col
+
+
+ggplot()+
+  geom_point(mapping = aes(x=training_df_04[,var1_col] ,y=training_df_04[,var2_col]))+
+  xlab(var1_col)+
+  ylab(var2_col)
+
+
+```
+
+On this specific example, we can identify a positive correlation with some outliers.  
+
+
+So, we can observe that some variables are highly correlated to each other.  
+This highlights that dimension reduction techniques shall be applied with the objective of simplifying our model.  
+
+```{r}
+PreProcPCA <- training_df_04 %>% select(-classe) %>% preProcess(.,method="pca")
+PreProcPCA
+```
+
+Principal Components Analysis allow to capture 95% of the variance with only 26 components.
+The predict function will be used to build our final training set  
+
+
+
+
+
+
+
+corr_matrix %>% as.data.frame() %>% ggplot(corr_matrix)+
+  geom_point(mapping=aes(x=row,y=col))
+
+preProcess(log10(spam[,-58]+1),method="pca"
+
+
 
 
 
