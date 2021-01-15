@@ -7,7 +7,7 @@ output: html_document
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, cache=TRUE)
+knitr::opts_chunk$set(echo = TRUE, cache=FALSE)
 ```
 
 ## Project Instructions
@@ -267,6 +267,15 @@ Regression Tree - model fit
 modFitTree <- train(classe ~ .,data =  training_pca_mod, method="rpart")
 ```
 
+Plotting the Tree
+
+```{r}
+library(rattle)
+fancyRpartPlot(modFitTree$finalModel)
+```
+
+
+
 Random Forest - model fit
 
 ```{r}
@@ -311,9 +320,10 @@ We can observe huge differences in accuracy between the 2 approaches :
 - Regression tree - accuracy on training set : `r as.numeric(cm_train_tree$overall['Accuracy'] )` on testing set : `r as.numeric(cm_test_tree$overall['Accuracy'] )`  
 - Random Forest - accuracy on training set : `r as.numeric(cm_train_rf$overall['Accuracy'] )` on testing set : `r as.numeric(cm_test_rf$overall['Accuracy'] )`    
 
-The performance of random forest is perfect (Accuracy = 1) we could then suspect overfitting. The accuracy on the test set is also nearly perfect.  
+The performance of random forest is perfect (Accuracy = 1) on the training set we could then suspect overfitting.  
+The accuracy on the test set is also nearly perfect and in any case far more accurate than the regression tree. 
 
-Based on the results of the cross validations, we will retain the Random Forest as the best model.  
+Based on the results of the cross validations, we will select the Random Forest as the best model and apply it to the validation set.   
 
 
 ## Validations  
