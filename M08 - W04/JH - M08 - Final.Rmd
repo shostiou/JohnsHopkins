@@ -7,7 +7,7 @@ output: html_document
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, cache=TRUE)
 ```
 
 ## Project Instructions
@@ -122,7 +122,7 @@ There are `r  trainin_empty_pct[trainin_empty_pct  > 0.90,] %>% length() ` varia
 A reasonable approach consists in removing those irrelevant variables.  
 
 ```{r}
-training_df_02 <- training_df_01 %>% select(-irrelevant_var_02)
+training_df_02 <- training_df_01 %>% select(-all_of(irrelevant_var_02))
 ```
 
 This new training set contains `r nrow(training_df_02)` observations of `r ncol(training_df_02)` variables.
@@ -140,7 +140,7 @@ The X variable is just an index. It shall not be taken into account for defining
 # variables to be excluded
 to_be_excluded <- c('X','user_name','raw_timestamp_part_1','raw_timestamp_part_2','cvtd_timestamp')
 # Exclusion
-training_df_03 <- training_df_02 %>% select(-to_be_excluded)
+training_df_03 <- training_df_02 %>% select(-all_of(to_be_excluded))
 
 ```
 
@@ -224,8 +224,8 @@ Note that we will consider the "test" csv file as a validation set.
 
 ```{r}
 validation_df_01 <- testing_df %>% select(-c(all_of(irrelevant_var)))
-validation_df_02 <- validation_df_01 %>% select(-irrelevant_var_02)
-validation_df_03 <- validation_df_02 %>% select(-to_be_excluded)
+validation_df_02 <- validation_df_01 %>% select(-all_of(irrelevant_var_02))
+validation_df_03 <- validation_df_02 %>% select(-all_of(to_be_excluded))
 validation_df_04 <- validation_df_03 %>% select(-new_window) 
 
 validation_pca <- validation_df_04 %>% select(-problem_id) %>% predict(PreProcPCA,.)
@@ -235,6 +235,7 @@ validation_pca$problem_id <- validation_df_04$problem_id
 
 
 ## Training of the Model  
+
 
 The model will have to handle a classification problem (from a set of predictors => predict a "classe" variable).  
 Random Forest appear to be one of the best method to be applied.  
