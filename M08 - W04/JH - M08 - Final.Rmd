@@ -2,7 +2,9 @@
 title: "JH - M08 - Final assignment"
 author: "shostiou"
 date: "08/01/2021"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 
