@@ -44,6 +44,13 @@ testing_df <- read.csv('testing.csv')
 
 ```
 
+Setting seeds (for reproducibility)
+
+```{r}
+set.seed(5977)
+```
+
+
 
 ## Data Cleaning
 
@@ -246,54 +253,73 @@ testing_pca_mod <- training_pca[-inTrain,]
 ```
 
 
+### Model Training  
+
+We will train 2 different kind of models with the Caret package :  
+- Regression tree  
+- Random forest    
 
 
+Regression Tree - model fit
 
-
-
-
-
-corr_matrix %>% as.data.frame() %>% ggplot(corr_matrix)+
-  geom_point(mapping=aes(x=row,y=col))
-
-preProcess(log10(spam[,-58]+1),method="pca"
-
-
-
-
-
-
-**Background**
-Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
-
-
-**Data**
-The training data for this project are available here:
-
-https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
-
-The test data are available here:
-
-https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
-
-
-
-
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+modFitTree <- train(classe ~ .,data =  training_pca_mod, method="rpart")
 ```
 
-## Including Plots
+Random Forest - model fit
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+modFitRF <- train(classe ~ .,data =  training_pca_mod, method="rf", ntree=100)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+Prediction Error (on the training set) - Regression Tree 
+
+```{r}
+train_pred <- training_pca_mod %>% select(-classe) %>% predict(modFitTree,.)
+cm_train_tree <- confusionMatrix(train_pred,training_pca_mod$classe)
+cm_train_tree
+```
+
+Prediction Error (on the test set) - Regression Tree 
+
+```{r}
+test_pred <- testing_pca_mod %>% select(-classe) %>% predict(modFitTree,.)
+cm_test_tree <- confusionMatrix(test_pred,testing_pca_mod$classe)
+cm_test_tree
+```
+
+Prediction Error (on the training set) - Random Forest
+
+```{r}
+train_pred <- training_pca_mod %>% select(-classe) %>% predict(modFitRF,.)
+cm_train_rf <- confusionMatrix(train_pred,training_pca_mod$classe)
+cm_train_rf
+```
+
+Prediction Error (on the test set) - Random Forest 
+
+```{r}
+test_pred <- testing_pca_mod %>% select(-classe) %>% predict(modFitRF,.)
+cm_test_rf <- confusionMatrix(test_pred,testing_pca_mod$classe)
+cm_test_rf
+```
+## Interpretation
+
+We can observe huge differences in accuracy between the 2 approaches :  
+- Regression tree - accuracy on training set : `r as.numeric(cm_train_tree$overall['Accuracy'] )` on testing set : `r as.numeric(cm_test_tree$overall['Accuracy'] )`  
+- Random Forest - accuracy on training set : `r as.numeric(cm_train_rf$overall['Accuracy'] )` on testing set : `r as.numeric(cm_test_rf$overall['Accuracy'] )`    
+
+The performance of random forest is perfect (Accuracy = 1) we could then suspect overfitting. The accuracy on the test set is also nearly perfect.  
+
+Based on the results of the cross validations, we will retain the Random Forest as the best model.  
+
+
+## Validations  
+
+As a final step, we will predict the outcomes of the validation sets with the random forest model.   
+
+```{r}
+predict(modFitRF,validation_pca)
+```
+
