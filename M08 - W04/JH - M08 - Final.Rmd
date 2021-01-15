@@ -204,6 +204,49 @@ PreProcPCA
 Principal Components Analysis allow to capture 95% of the variance with only 26 components.
 The predict function will be used to build our final training set  
 
+```{r}
+
+training_pca <- training_df_04 %>% select(-classe) %>% predict(PreProcPCA,.)
+training_pca$classe <- training_df_04$classe
+```
+
+
+In order to prepare the cross validation, we need to Preprocess the test set like we did with the training set.  
+Note that we will consider the "test" csv file as a validation set.
+
+
+```{r}
+validation_df_01 <- testing_df %>% select(-c(all_of(irrelevant_var)))
+validation_df_02 <- validation_df_01 %>% select(-irrelevant_var_02)
+validation_df_03 <- validation_df_02 %>% select(-to_be_excluded)
+validation_df_04 <- validation_df_03 %>% select(-new_window) 
+
+validation_pca <- validation_df_04 %>% select(-problem_id) %>% predict(PreProcPCA,.)
+validation_pca$problem_id <- validation_df_04$problem_id
+
+```
+
+
+## Training of the Model  
+
+The model will have to handle a classification problem (from a set of predictors => predict a "classe" variable).  
+Random Forest appear to be one of the best method to be applied.  
+Our preprocessed training set (PCA) will be used to build the model.  
+
+### Defining a test set  
+
+The testing set provided with the project instructions will be considered as a validation set.  
+In order to be able to perform cross validation, we need to split data contained into the "training" file into a training set and a test set.  
+
+```{r}
+inTrain <- createDataPartition(training_pca$classe,p=0.75,list=FALSE)
+training_pca_mod <- training_pca[inTrain,]
+testing_pca_mod <- training_pca[-inTrain,]
+
+```
+
+
+
 
 
 
