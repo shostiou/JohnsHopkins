@@ -1,0 +1,24 @@
+---
+title: "Johns Hopkins - Assignment"
+author: "shostiou"
+date: "02 March 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r, echo=FALSE,warning=FALSE, message=FALSE}
+library(leaflet)
+
+mymap <- leaflet() %>% addTiles()
+mymap <- mymap %>% addMarkers(lat=48.45989656395098,lng=-5.089813876289557, popup="Ouessant Island")
+mymap %>% addRectangles(lat1 = 48.452973482461665, lng1 = -5.094611143600472,
+                        lat2 = 48.45015455345115, lng2 = -5.0922007688525595, popup = "beach")
+
+```
+
+

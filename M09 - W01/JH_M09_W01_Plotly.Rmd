@@ -1,0 +1,28 @@
+---
+title: "JH_M09_W01_PlotLy"
+author: "shostiou"
+date: "25/02/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## First Plotly Graph
+
+```{r, message=FALSE,warning=FALSE}
+library(plotly)
+data(mtcars)
+```
+
+
+```{r}
+head(mtcars)
+```
+
+
+
+```{r}
+plot_ly(mtcars, x=mtcars$wt , y=mpg, mode='markers')
+```
