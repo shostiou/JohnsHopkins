@@ -1,0 +1,83 @@
+---
+title: "jh_dataprod_final_proj"
+author: "shostiou"
+date: "11/03/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This document describes the preliminary steps of reflexion related to the definition of a Shiny application for the Johns Hopkins course "building data products" final project.  
+
+## Purpose of the application  
+
+The application which will be defined will be quite simple.  
+Using one of the "sand box" dataset available in R, the interface will be focussed on comparing the performances of various regression models.  
+For performance & interactivity, the dataset will need to be kept simple (ie. 100 lines max).  
+
+As a standard view, a plot will display the relationship between 2 continuous variables (x vs y).  
+
+Then, the user will be invited to build regression models :  
+- linear regression (simple linear regression)  
+- polynomial regression + optionnel parameter = "degree of polynom"  
+
+As an option, the user will be invited to display or not the MSE (mean squarred error).  
+
+## Dataset selection  
+
+A qucik Google search for  "sand box regression datasets" drove me to the page : "https://machinelearningmastery.com/machine-learning-datasets-in-r/"  
+The "abalone dataset" mentioned on the page appeared to be a perfect candidate for me.  
+This package comes from a book "Applied Predictive Modeling"
+
+This dataset is used to predict abalone age from abalone measurement data.
+The dataset is documented at  https://archive.ics.uci.edu/ml/datasets/Abalone.  
+The predicted variable is "rings" 1 ring = 1 year old.
+
+
+```{r, warning=FALSE, message=FALSE}
+# install.packages("AppliedPredictiveModeling")
+library(AppliedPredictiveModeling)
+library(ggplot2)
+library(tidyverse)
+data(abalone)
+```
+
+Let's have a look at the content.  
+
+```{r}
+head(abalone)
+```
+
+```{r}
+abalone %>% filter(Height<0.3) %>% ggplot()+
+  geom_jitter(mapping=aes(x=Height,y=Rings),alpha=0.1)
+```
+
+
+
+
+
+
+
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
