@@ -16,40 +16,32 @@ This document describes the preliminary steps of reflexion related to the defini
 ## Purpose of the application  
 
 The application which will be defined will be quite simple.  
-Using one of the "sand box" dataset available in R, the interface will be focussed on comparing the performances of various regression models.  
+Using one of the "sand box" dataset available in R, the interface will be focussed on being a companion to EDA (Exploratory Data Analysis) 
+
 For performance & interactivity, the dataset will need to be kept simple (ie. 100 lines max).  
 
-As a standard view, a plot will display the relationship between 2 continuous variables (x vs y).  
+As a standard view, a plot will display the relationship between 2 variables (x vs y) available in the dataset. The user will be invited which variables shall be selected as "x" and which variable shall be selected as "y" thanks to the selectInput() object in the UI.
 
-Then, the user will be invited to build regression models :  
-- linear regression (simple linear regression)  
-- polynomial regression + optionnel parameter = "degree of polynom"  
+A second step, the user will be invited to change the color of the plot with a set o radio buttons radioButtons().  
 
-As an option, the user will be invited to display or not the MSE (mean squarred error).  
+
 
 ## Dataset selection  
 
-A qucik Google search for  "sand box regression datasets" drove me to the page : "https://machinelearningmastery.com/machine-learning-datasets-in-r/"  
-The "abalone dataset" mentioned on the page appeared to be a perfect candidate for me.  
-This package comes from a book "Applied Predictive Modeling"
-
-This dataset is used to predict abalone age from abalone measurement data.
-The dataset is documented at  https://archive.ics.uci.edu/ml/datasets/Abalone.  
-The predicted variable is "rings" 1 ring = 1 year old.
+I decided to use one the pre-loaded data available in R (I used the data() command to get the list of the available datasets). I decided to select the "trees" dataset which shows the relationship between  Diameter, Height and Volume for Black Cherry Trees.
 
 
 ```{r, warning=FALSE, message=FALSE}
 # install.packages("AppliedPredictiveModeling")
-library(AppliedPredictiveModeling)
 library(ggplot2)
 library(tidyverse)
-data(abalone)
+data(trees)
 ```
 
-Let's have a look at the content.  
+Let's have a look at the content. It's a perfect dataset for our project !
 
 ```{r}
-head(abalone)
+str(trees)
 ```
 
 ```{r}

@@ -1,0 +1,64 @@
+---
+title: "Johns Hopkins data products project"
+author: "S. Hostiou"
+date: "2021-03-12"
+logo: "coursera_logo.png"
+output: 
+  ioslides_presentation:
+    widescreen: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Introduction  {.smaller}
+
+This document describes the preliminary steps of reflexion related to the definition of a Shiny application for the Johns Hopkins course "building data products" final project.  
+
+As requested in the instructions, the application will be kept simple.  
+Using one of the "sand box" dataset available in R, the interface will be focussed on being a companion to EDA (Exploratory Data Analysis)  
+
+- For performance & interactivity, the dataset will need to be kept simple (ie. 100 lines max).  
+- As a standard view, a plot will display the relationship between 2 variables (x vs y) available in the dataset. The user will be invited which variables shall be selected as "x" and which variable shall be selected as "y" thanks to the selectInput() object in the UI.  
+- A second step, the user will be invited to change the color of the plot with a set o radio buttons radioButtons().  
+
+
+
+## Dataset selection  {.smaller}
+
+I decided to use one the pre-loaded data available in R (I used the data() command to get the list of the available datasets).  
+I decided to select the "trees" dataset which shows the relationship between  Diameter, Height and Volume for Black Cherry Trees.  
+The structure of the "trees" dataset is given below :
+
+
+```{r, warning=FALSE, message=FALSE}
+# Installing the different packages.
+library(ggplot2)
+library(tidyverse)
+data(trees)
+```
+
+```{r, warning=FALSE, comment=""}
+str(trees)
+```
+
+## Example of scatter plot {.smaller}
+
+The Shiny Application will allow the user to perform some EDA of the "trees" dataset.  
+A first list will allow the user to pick the variable to be displayed on the "x" axis ; a second list will offer the user to pick the variable to be selected on the "y" axis ; Girth, Height or Volume.  
+One example of plot which could be obtained is showed below
+
+```{r, warning=FALSE,message=FALSE,fig.height=4}
+ggplot(trees) + geom_point(mapping=aes(x=Girth,y=Volume))
+
+```
+
+
+## Instructions {.smaller}
+
+In order to keep the ergonomy of the application "simple", the user instructions (explaining how the app works) will be displayed on a dedicated tab (instructions tab), positionned on the sidebar.  
+User actions will be placed in the "Main" Tab of the application.  
+
+
+

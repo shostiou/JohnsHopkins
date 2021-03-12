@@ -7,19 +7,26 @@
 #    http://shiny.rstudio.com/
 #
 
+# Libraries required for the project
 library(shiny)
+library(ggplot2)
+
 
 # Define server logic required to draw a histogram
-shinyServer(function(input, output) {
+shinyServer(function(input, output,session) {
 
-    output$distPlot <- renderPlot({
+    output$treesplot <- renderPlot({
 
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white')
+        # generate the variables to be displayed (link with UI)
+        #print("The value of x is ", input$x_var)
+        x    <- trees[,input$x_var]
+        y    <- trees[,input$y_var]
+        # color pf the plot
+        plt_col <- input$radio_color
+        # ggplot2 to build the plot
+        ggplot()+
+            geom_point(mapping=aes(x=x,y=y),col=plt_col, size=3)+xlab(input$x_var)+ylab(input$y_var)
+        
 
     })
 
