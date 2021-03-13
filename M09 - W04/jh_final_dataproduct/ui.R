@@ -42,7 +42,8 @@ shinyUI(fluidPage(
                             p(''),
                             selectInput("x_var","Select the x-axis variable",choices=trees_var),
                             selectInput("y_var","Select the y-axis variable",choices=trees_var),
-                            radioButtons("radio_color","Select color of the plot",color_var)
+                            radioButtons("radio_color","Select color of the plot",color_var),
+                            sliderInput("pt_size", "Adjust points size:",min = 1, max = 5, value = 1)
                                     ), #sidebarPanel )
 
                      # Show a plot of the generated distribution
@@ -61,10 +62,11 @@ shinyUI(fluidPage(
                      p("This application is used to do a basic exploration of the trees data set."),
                      p("It will automatically build a scatter plot between 2 variables of the data set"),
                      p(""),
-                     h3('User Actions : '),
+                     h3('Step by step approach : '),
                      p("1. Please start by selecting the variable to be displayed on the x axis"),
                      p("2. Please start by selecting the variable to be displayed on the y axis"),
-                     p("3. Please adjust the color of the plot according to your preferences")
+                     p("3. Please adjust the color of the plot according to your preferences"),
+                     p("4. Please adjust the size of the scatter plot points according to your preferences"),
                     ) # tabPanel )
         ) # tabSetPanel )
 

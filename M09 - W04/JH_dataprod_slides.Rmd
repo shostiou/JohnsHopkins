@@ -21,7 +21,7 @@ Using one of the "sand box" dataset available in R, the interface will be focuss
 
 - For performance & interactivity, the dataset will need to be kept simple (ie. 100 lines max).  
 - As a standard view, a plot will display the relationship between 2 variables (x vs y) available in the dataset. The user will be invited which variables shall be selected as "x" and which variable shall be selected as "y" thanks to the selectInput() object in the UI.  
-- A second step, the user will be invited to change the color of the plot with a set o radio buttons radioButtons().  
+- A second step, the user will be invited to change the color of the plot with a set of radio buttons radioButtons().  
 
 
 
@@ -57,8 +57,18 @@ ggplot(trees) + geom_point(mapping=aes(x=Girth,y=Volume))
 
 ## Instructions {.smaller}
 
-In order to keep the ergonomy of the application "simple", the user instructions (explaining how the app works) will be displayed on a dedicated tab (instructions tab), positionned on the sidebar.  
+In order to keep the ergonomy of the application "simple", the user instructions (explaining how the app works) will be displayed on a dedicated tab (instructions tab), located on the sidebar.  
 User actions will be placed in the "Main" Tab of the application.  
+The plot will be shown on the main panel of the "Main" Tab.  
+
+## Issues & improvements {.smaller}
+
+I spent some time figuring out why my server code was crashing but I finally found that I wasn't using properly some variables defined in the UI (forgot to used "input$" as a prefix).  
+
+Finally, I made some improvements in the interface by allowing the user to set the scatter plot points size according to his own preference (offering the possibility to select a value from 1 to 5 thanks to a slider object).  
+
+Further improvements could be possible, ie. add a linear regression line to the plot & display the equation of the linear model. 
+
 
 
 

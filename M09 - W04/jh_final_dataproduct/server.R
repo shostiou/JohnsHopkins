@@ -23,9 +23,11 @@ shinyServer(function(input, output,session) {
         y    <- trees[,input$y_var]
         # color pf the plot
         plt_col <- input$radio_color
+        # point size
+        pt_size <- input$pt_size
         # ggplot2 to build the plot
         ggplot()+
-            geom_point(mapping=aes(x=x,y=y),col=plt_col, size=3)+xlab(input$x_var)+ylab(input$y_var)
+            geom_point(mapping=aes(x=x,y=y),col=plt_col, size=pt_size)+xlab(input$x_var)+ylab(input$y_var)
         
 
     })
