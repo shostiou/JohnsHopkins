@@ -1,0 +1,12 @@
+name: jh_final_dataproduct
+title: jh_final_dataproduct
+username:
+account: shostiou
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3785336
+bundleId: 4339698
+url: https://shostiou.shinyapps.io/jh_final_dataproduct/
+when: 1615645414.62808
+asMultiple: FALSE
+asStatic: FALSE
