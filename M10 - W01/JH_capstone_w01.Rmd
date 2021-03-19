@@ -1,0 +1,150 @@
+---
+title: "JH_capstone_W01"
+author: "shostiou"
+date: "17/03/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This document is used as a base to the Johns Hopkins final Capstone project from the Data Science specialization.  
+The purpose of the project is to apply data science skills to Natural Language Processing (NLP) / Text mining problematics.
+
+## Basic requirements
+
+As a preliminary step, let's start by calling the packages which will be required for the project.  
+As suggested by the instructors, I spent some time to get a basic understanding of what NLP / text mining is.  
+As I was looking for a "hands on" approach, I rapidly discovered that a set of packages where available to address such kind of problems.  
+Tidytext is one of those important packages in R.  
+The readtext package will alos be required to be able to open a text file.  
+The text mining library tm appears alos to be a must.
+
+```{r, message=FALSE,warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(tidytext)
+library(readtext)
+library(corpus)
+library(R.utils)
+```
+
+
+## Basic approach  
+
+### Reading the text file   
+
+The text file will be upload into a R dataframe.  
+
+```{r}
+# Building the file directory  
+file_dir <- getwd()
+file_dir <- paste0(file_dir,'/data/final/en_US/')
+# file name to open
+file_name <- 'en_US.twitter.txt'
+file_path = paste0(file_dir,file_name)
+
+```
+
+Opening the file with the readtext command readLines
+Then, we create a subsample to limit the size of the data in memory
+
+```{r, message=FALSE,warning=FALSE}
+# Setting the seeds
+set.seed(05091810)
+# Counting the lines of the raw text
+raw_text_lines <- countLines(file_path)
+# Creating an index of samples
+sample_of_lines <- sample(seq(1,raw_text_lines,by = 1), size = round(raw_text_lines/20), replace = F)
+sample_of_lines <- liste(sample_of_lines)
+# Reading the samples
+raw_text_list <- readLines(file_path)[sample_of_lines] 
+# Freeing memory
+rm(sample_of_lines)
+#raw_text_df <- tibble(text=readLines(file_path))
+```
+
+Turning the text to a tibble
+
+```{r}
+twitter_us_df <- tibble(text=raw_text_list)
+```
+
+```{r}
+twitter_us_df %>%  
+  unnest_tokens(word,text) %>%
+  count(word) %>%
+  arrange(desc(n))
+  
+```
+
+A common practice there would be to remove the stop words. For the purpose of our application, those words will be kept.  
+
+
+
+
+
+
+
+
+
+prints the maximum length of a line of text from the string vector  
+
+```{r}
+max(nchar(raw_text))
+```
+
+For the twitter dataset = 140 (normal)  
+For the news dataset = 11384  
+For the blog 40833.  
+
+Finding the number of occurences of words love an hate in the Twitter dataset.  
+
+```{r}
+nb_love <- sum(str_count(raw_text, "love"))
+nb_have <- sum(str_count(raw_text, "hate"))
+```
+
+Finding the occurence of Biostats
+
+```{r}
+raw_text[str_detect(raw_text, "biostats")] 
+```
+
+A computer once beat me at chess, but it was no match for me at kickboxing
+
+```{r}
+raw_text[str_detect(raw_text, "A computer once beat me at chess, but it was no match for me at kickboxing")] 
+```
+
+
+## Basic requirements
+
+```{r}
+raw_text_df %>%  
+  unnest_tokens(word,text) %>%
+  count(word) %>%
+  arrange(desc(n))
+  
+```
+
+## Sampling
+
+Due to the large size of the datasets, they are extremley painful to manipulate.  
+EDA will be built on a subset (10%) of randomly sampled datasets.  
+
+```{r}
+set.seed(05091810)
+```
+
+```{r}
+# Create a sample of 50 numbers which are incremented by 1.
+x <- seq(0,50,by = 1)
+
+sample(x,size=3, replace =F)
+```
+
+
