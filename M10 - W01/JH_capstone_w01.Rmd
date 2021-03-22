@@ -43,29 +43,77 @@ The text file will be upload into a R dataframe.
 # Building the file directory  
 file_dir <- getwd()
 file_dir <- paste0(file_dir,'/data/final/en_US/')
-# file name to open
-file_name <- 'en_US.twitter.txt'
+# files name to open
+file_name <- c('en_US.twitter.txt','en_US.news.txt','en_US.twitter.txt')
 file_path = paste0(file_dir,file_name)
 
 ```
 
 Opening the file with the readtext command readLines
 Then, we create a subsample to limit the size of the data in memory
+The data will be stored into a dataframe (tibble) made of 2 columns :  
+- dataset = file name used as a source to collecte the data  
+- text = content of the text line read from the txt files.
+
 
 ```{r, message=FALSE,warning=FALSE}
+
 # Setting the seeds
 set.seed(05091810)
-# Counting the lines of the raw text
-raw_text_lines <- countLines(file_path)
-# Creating an index of samples
-sample_of_lines <- sample(seq(1,raw_text_lines,by = 1), size = round(raw_text_lines/20), replace = F)
-sample_of_lines <- liste(sample_of_lines)
-# Reading the samples
-raw_text_list <- readLines(file_path)[sample_of_lines] 
-# Freeing memory
-rm(sample_of_lines)
-#raw_text_df <- tibble(text=readLines(file_path))
+# Initiating Empty variables
+raw_text <- ''
+en_US_tibble <- tibble(dataset=character(),text=character())
+
+# Looping on the list of files
+for (f_name in file_name){
+  print(f_name)
+  
+  # Temporary Tibble  
+  temp_tibble <- tibble(dataset=character(),text=character())
+  
+  # file path  
+  file_path = paste0(file_dir,f_name)
+  # Counting the lines of the raw text
+  raw_text_lines <- countLines(file_path)
+  # Creating an index of samples
+  sample_of_lines <- sample(seq(1,raw_text_lines,by = 1), 
+                            size = round(raw_text_lines/100), replace = F)
+  # Reading the samples
+  #temp_tibble$text <- tibble(readLines(file_path)[sample_of_lines]
+  # Adding to the tibble
+  # A regex is used to remove the file extension. 
+  temp_tibble <- tibble(dataset=sub('\\.txt$', '', f_name),
+                        text=(readLines(file_path)[sample_of_lines]))
+  en_US_tibble <- rbind(en_US_tibble,temp_tibble)
+
+} 
+
+# Freeing memory by suppressing unnecessary variables
+rm(temp_tibble)
+
+
 ```
+
+
+## Tokenization
+
+This first step will be carried with the support of the unnest_tokens function which is part of the tidy_text package.  
+As I am interested in comparing the word frequencies between the 3 files used as a source, the dataset column of the dataframe will be kept in this first step.
+
+```{r}
+en_US_token <- en_US_tibble %>% unnest_tokens(word,text)
+# Defining  the frequency of words for each file
+en_US_token_by_file <- en_US_token %>% group_by(dataset) %>% count(word) %>% mutate(freq_word = n/sum(n)) %>% arrange(dataset,desc(freq_word))
+```
+
+According to my readings, a common usage in text mining, is to remove "stop words" from the datasets.  
+As the purpose of this project is to predict what could be the next 2 or 3 words, it seems essential to keep those stop words into the dataset as they appear to be essential to created transitions with other words.  
+
+
+
+
+
+
 
 Turning the text to a tibble
 
