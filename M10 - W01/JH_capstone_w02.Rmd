@@ -1,0 +1,277 @@
+---
+title: "JH_capstone_W02"
+author: "shostiou"
+date: "17/03/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This document is used as a base to the Johns Hopkins final Capstone project from the Data Science specialization.  
+The purpose of the project is to apply data science skills to Natural Language Processing (NLP) / Text mining problematics.  
+The current document is the intermediate report which is due as an assignment for week 02.  
+### References  
+
+As suggested by the instructors, my own researches where done to get a basic understanding of Text Mining and Natural Language Processing.  
+The book "Text Mining with R" (https://www.tidytextmining.com/) was a great source of inspiration to define my approach.  
+The tidytext package which can be used in conjunction with dplyr will be used as a core component to manipulate text.  
+
+```{r, echo = FALSE,message=FALSE,warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(tidytext)
+library(readtext)
+library(corpus)
+library(R.utils)
+```
+
+
+### Sampling of the text files  
+
+The 3 text files of English language will be uploaded into a R dataframe (Tibble).  
+In order to limit memory consumption and to improve performance, a subset of the 3 files will be built by applying random sampling (seeds set to a constant value for reproducibility).  
+Sample size will be limited to 10% of the original data sets.  
+Please note that for the convenience of the reader, code related to reading & sampling operations of the file has been hidden.
+
+```{r, echo=FALSE}
+# Building the file directory  
+file_dir <- getwd()
+file_dir <- paste0(file_dir,'/data/final/en_US/')
+# files name to open
+file_name <- c('en_US.blogs.txt','en_US.news.txt','en_US.twitter.txt')
+file_path = paste0(file_dir,file_name)
+
+```
+
+
+```{r, echo=FALSE,message=FALSE,warning=FALSE, cache=TRUE}
+
+# Setting the seeds
+set.seed(05091810)
+# Initiating Empty variables
+raw_text <- ''
+en_US_tibble <- tibble(dataset=character(),text=character())
+
+# Looping on the list of files
+for (f_name in file_name){
+
+  # Temporary Tibble  
+  temp_tibble <- tibble(dataset=character(),text=character())
+  
+  # file path  
+  file_path = paste0(file_dir,f_name)
+  # Counting the lines of the raw text
+  raw_text_lines <- countLines(file_path)
+  # Creating an index of samples
+  sample_of_lines <- sample(seq(1,raw_text_lines,by = 1), 
+                            size = round(raw_text_lines/10), replace = F)
+
+  # Adding to the tibble
+  # A regex is used to remove the file extension. 
+  temp_tibble <- tibble(dataset=sub('\\.txt$', '', f_name),
+                        text=(readLines(file_path)[sample_of_lines]))
+  en_US_tibble <- rbind(en_US_tibble,temp_tibble)
+
+} 
+
+# Freeing memory by suppressing unnecessary variables
+rm(temp_tibble)
+
+
+```
+
+
+## Summary
+
+The table below summarizes the number of lines contained in each sample extracted from the text files.
+
+```{r, message = FALSE, warning=FALSE}
+en_US_tibble %>%
+  group_by(dataset) %>%
+  count(text) %>% summarise(nb_lines = sum(n))
+```
+
+
+## Tokenization
+
+Tokenization will be done by using the unnest_tokens function of the tidytext package. 
+In order to compare word frequencies between the 3 datasets (blogs, news, twitter), a column will be kept to keep track of the source files.
+
+```{r, echo=FALSE}
+en_US_token <- en_US_tibble %>% unnest_tokens(word,text)
+# Defining  the frequency of words for each file
+en_US_token_by_file <- en_US_token %>% group_by(dataset) %>% count(word) %>% mutate(freq_word = n/sum(n)) %>% arrange(dataset,desc(freq_word))
+# Switching the dataset column (source file) to factor
+en_US_token_by_file$dataset <- as.factor(en_US_token_by_file$dataset)
+
+```
+
+As a result of tokenization, the number of words contained in each of the 3 samples is given in the table below.  
+
+```{r, echo=FALSE, warning=FALSE,message=FALSE}
+en_US_token %>% group_by(dataset) %>% count(word) %>% summarize(nb_of_words = sum(n))
+```
+
+We can observe that the number of samples of words is correctly balanced between the 3 data sets. 
+
+### Comment about removal of "stop words"
+
+Based on my readings, a common practive in text mining, is to remove "stop words" from the datasets.  
+As the purpose of this project is to predict from a first word what could be the next 2 or 3 words, it seems essential to keep those stop words as part of the dataset as they appear to be required to create explicit transitions with other words.  
+Removing stop words is essential while dealing with content analysis of a text but this is not the purpose of this project.
+
+
+## EDA - Frequency of single words  
+
+As a first step, we can compare which are the most frequent words in the blogs, news and twitter datasets. The plots below identify the words with a frequency superior to 0.05%.
+
+```{r, echo=FALSE}
+en_US_token_by_file %>% filter(freq_word > 0.005) %>% ggplot()+
+  geom_col(aes(x=reorder(word,freq_word),y=freq_word)) +
+  coord_flip()+
+  facet_grid(. ~ dataset)+
+  ylab('Frequency of words')+
+  xlab('Most frequent words')+
+  ggtitle('Most frequent words')
+```
+
+We can observe that from a general perspective, the 3 text files seem to share the same set of most frequent words. Those words appear to be "stop words" for most of them.  
+
+
+### Exploring the combined data set  
+
+As part of a preliminary step, the frequency of words was compared by distinguishing the 3 data sets. In this step, the exploration will be focused on a single data set resulting of a combination of "blogs", "news" and "twitter" data.  
+
+```{r, echo=FALSE}
+en_US_token_com <- en_US_token %>% select(-dataset) %>% count(word) %>% mutate(freq_word = n/sum(n)) %>% arrange(desc(freq_word))
+```
+
+We can now display what are the most frequent words out of this new dataset
+
+```{r, echo=FALSE}
+en_US_token_com %>% filter(freq_word > 0.005) %>% 
+  mutate(word = reorder(word, freq_word)) %>%
+  ggplot() +
+  geom_col(aes(x=word,y=freq_word), fill='darkgreen')+
+  coord_flip()+
+  xlab('words')+
+  ylab('frequency of words')+
+  ggtitle('Frequency of most common words')
+```
+
+Again, we can observe, and this is not a surprise, that the most frequent words are stop words. This underlines the importance of keeping those words as part of our training set because they will probably play a key role in our prediction.
+
+### cloud of words
+
+Seen from another perspective, we can visualize the importance of words thanks to a cloud of words graph (by using the wordcloud package)
+
+```{r,echo}
+library(wordcloud)
+library(RColorBrewer)
+en_US_token_com %>% with(wordcloud(word, freq_word, max.words = 150))
+```
+
+
+## Relationships between 2 words  
+
+In this step we will identify which words tend to follow each others. As a first exploratory approach, we will identify the pairs of adjacent words (which are called "bi-grams").  
+The most frequent bigrams appears to be the ones linking the common stop words. This is not a surprise because couples like "of the", "in the" are fundamental elements of transitions of the English language. They need to be correctly implemented in our text prediction model.
+
+```{r, echo=FALSE}
+en_US_bigram <- en_US_tibble %>% 
+  unnest_tokens(bigram,text, token = "ngrams",n=2) %>%
+  count(bigram, sort = TRUE) %>%
+  mutate(freq_bigram = n/sum(n))
+  
+```
+
+```{r, echo=FALSE}
+en_US_bigram %>% filter(freq_bigram > 0.0008) %>% 
+  mutate(bigram = reorder(bigram, freq_bigram)) %>%
+  ggplot() +
+  geom_col(aes(x=bigram,y=freq_bigram), fill='darkgreen')+
+  coord_flip()+
+  xlab('bigrams')+
+  ylab('frequency of bigrams')+
+  ggtitle('Frequency of most common bigrams')
+```
+
+
+## Relationships between 3 words  
+
+The analysis can be extended to the analysis of trigrams (relationship between 3 consecutive words).  
+
+```{r, echo=FALSE}
+en_US_trigram <- en_US_tibble %>% 
+  unnest_tokens(trigram,text, token = "ngrams",n=3) %>%
+  count(trigram, sort = TRUE) %>%
+  mutate(freq_trigram = n/sum(n))
+  
+```
+
+```{r, echo=FALSE}
+en_US_trigram %>% filter(freq_trigram > 0.0008) %>% 
+  mutate(trigram = reorder(trigram, freq_trigram)) %>%
+  ggplot() +
+  geom_col(aes(x=trigram,y=freq_trigram), fill='darkred')+
+  coord_flip()+
+  xlab('trigrams')+
+  ylab('frequency of trigrams')+
+  ggtitle('Frequency of most common trigrams')
+```
+
+
+
+
+
+
+
+histogram showing the freq.
+
+```{r}
+en_US_bigram %>% filter(freq_bigram>0.000005) %>%
+  ggplot()+
+  geom_density(mapping = aes(log(freq_bigram)))
+```
+
+
+
+
+
+
+
+Review criteria
+less 
+Does the link lead to an HTML page describing the exploratory analysis of the training data set?
+Has the data scientist done basic summaries of the three files? Word counts, line counts and basic data tables?
+Has the data scientist made basic plots, such as histograms to illustrate features of the data?
+Was the report written in a brief, concise style, in a way that a non-data scientist manager could appreciate?
+
+
+
+
+
+Type a word : prediction the next one
+Having 2 words : preditict the 3rd
+More than 2 words : focuss on the 2 last one to predict the 3rd
+
+
+
+
+
+
+
+
+
+```{r}
+en_US_token_by_file %>% mutate(dataset=as.character(dataset)) %>% 
+  select(-dataset) %>% group_by(word) %>%
+  filter(freq_word > 0.005) %>% 
+  select(word,n) %>% arrange(desc(n)) 
+```
+
+
