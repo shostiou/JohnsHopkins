@@ -1,0 +1,480 @@
+---
+title: "JH_captone_w03"
+author: "shostiou"
+date: "25/03/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries  
+
+```{r, echo = FALSE,message=FALSE,warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(tidytext)
+library(readtext)
+library(corpus)
+library(R.utils)
+library(tm)
+library(stringr)
+```
+
+Importing the unigrams, bigrams and trigrams defined during the previous week.
+
+
+load("en_US_token.Rda")
+load("en_US_bigram.Rda")
+load("en_US_trigram.Rda")
+load("en_US_fourgram.Rda")
+load("en_US_fivegram.Rda")
+
+
+##  Identification of words (without stopwords)
+
+
+
+
+
+
+
+##  Splitting the words into distinct columns
+
+In order to setup of prediction environment, we need to be split our bigram data set into 2 columns : word1 and word 2 and split the data into 3 columns for the trigram.  
+
+```{r, cache=TRUE}
+# load("en_US_bigram.Rda")
+en_US_bigram <- en_US_bigram %>% 
+  separate(bigram, c("word1","word2"), sep =" ")
+save(en_US_bigram,file="en_US_bigram_split.Rda")
+rm(en_US_bigram)
+```
+
+
+```{r, cache=TRUE}
+load("en_US_trigram.Rda")
+en_US_trigram <- en_US_trigram %>% 
+separate(trigram, c("word1","word2","word3"), sep =" ")
+save(en_US_trigram,file="en_US_trigram_split.Rda")
+rm(en_US_trigram)
+```
+
+```{r, cache=TRUE}
+load("en_US_fourgram.Rda")
+en_US_fourgram <- en_US_fourgram %>% 
+  separate(fourgram, c("word1","word2","word3","word4"), sep =" ")
+save(en_US_fourgram,file="en_US_fourgram_split.Rda")
+rm(en_US_fourgram)
+```
+
+
+```{r, cache=TRUE}
+load("en_US_fivegram.Rda")
+en_US_fivegram <- en_US_fivegram %>% 
+  separate(fivegram, c("word1","word2","word3","word4","word5"), sep =" ")
+save(en_US_fivegram,file="en_US_fivegram_split.Rda")
+rm(en_US_fivegram)
+```
+
+
+Our prediction algorithm will be using probabilities to make a prediction of the next word. We can think about the following approach :  
+- taking word1 as an input argument, which probability is associated to word 2.  
+- the same approach will be extended to tri-grams, but this time, the probability to be taken into consideration will be defined by considering word1 & word2 as input arguments.  
+
+Defining probabilities for bigrams
+
+```{r}
+load('en_US_bigram_split.Rda')
+en_US_bigram_prob <- en_US_bigram %>% group_by(word1) %>% mutate(prob_word2 = n / sum(n)) %>% arrange(desc(word1)) %>% select(word1,word2,prob_word2)
+save(en_US_bigram_prob,file='en_US_bigram_prob.Rda')
+```
+
+
+Defining probabilities for trigrams  
+
+```{r}
+load('en_US_trigram_split.Rda')
+en_US_trigram_prob <- en_US_trigram %>% group_by(word1,word2) %>% mutate(prob_word3 = n / sum(n)) %>% arrange(desc(word1,word2)) %>% select(word1,word2,word3,prob_word3)
+save(en_US_trigram_prob,file='en_US_trigram_prob.Rda')
+```
+
+
+Defining probabilities for fourgrams  
+
+```{r}
+load('en_US_fourgram_split.Rda')
+en_US_fourgram_prob <- en_US_fourgram %>% group_by(word1,word2,word3) %>% mutate(prob_word4 = n / sum(n)) %>% arrange(desc(word1,word2,word3)) %>% select(word1,word2,word3,word4,prob_word4)
+save(en_US_fourgram_prob,file='en_US_fourgram_prob.Rda')
+```
+
+
+Defining probabilities for fivegrams  
+
+```{r}
+load('en_US_fivegram_split.Rda')
+en_US_fivegram_prob <- en_US_fivegram %>% group_by(word1,word2,word3,word4) %>% mutate(prob_word5 = n / sum(n)) %>% arrange(desc(word1,word2,word3,word4)) %>% select(word1,word2,word3,word4,word5,prob_word5)
+save(en_US_fivegram_prob,file='en_US_fivegram_prob.Rda')
+```
+
+
+
+## Proof of concept
+
+The guy in front of me just bought a pound of bacon, a bouquet, and a case of
+
+###  Using SQLite to speedup performances 
+
+Tibbles are too small to perform search requests in large volume of data.
+Some web researches highlighted that using a SQLite database could contribute to significantly improve the performance of data retrieval.
+
+```{r}
+library(RSQLite)
+```
+
+Creating the connection to the database.
+
+```{r}
+mydb <- dbConnect(RSQLite::SQLite(), "my-db.sqlite")
+```
+
+Building the five grams table
+
+```{r}
+load('en_US_fivegram_prob.Rda')
+dbWriteTable(mydb, "fivegram_prob", ungroup(en_US_fivegram_prob))
+
+```
+
+Building the four grams table
+
+```{r}
+load('en_US_fourgram_prob.Rda')
+dbWriteTable(mydb, "fourgram_prob", ungroup(en_US_fourgram_prob))
+```
+
+
+Building the three grams table
+
+```{r}
+load('en_US_trigram_prob.Rda')
+dbWriteTable(mydb, "trigram_prob", ungroup(en_US_trigram_prob))
+```
+
+Building the bi grams table
+
+
+```{r}
+load('en_US_bigram_prob.Rda')
+dbWriteTable(mydb, "bigram_prob", ungroup(en_US_bigram_prob))
+```
+
+Disconnecting the database
+
+```{r}
+dbDisconnect(mydb)
+```
+
+
+
+## POC  
+
+```{r}
+library(RSQLite)
+```
+
+Creating the connection to the database.
+
+```{r}
+mydb <- dbConnect(RSQLite::SQLite(), "my-db.sqlite")
+```
+
+# Setting the words for prediction  
+
+The guy in front of me just bought a pound of bacon, a bouquet, and a case of
+=> beer
+
+You're the reason why I smile everyday. Can you follow me please? It would mean the
+=> world
+
+
+Hey sunshine, can you follow me and make me the
+=> happiest
+
+Very early observations on the Bills game: Offense still struggling but the
+=< best
+
+
+Go on a romantic date at the
+=< end
+
+Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my
+=> way
+
+Ohhhhh #PointBreak is on tomorrow. Love that film and haven't seen it in quite some
+=> time
+
+After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little
+=> girl
+
+Be grateful for the good times and keep the faith during the
+=> day
+
+If this isn't the cutest thing you've ever seen, then you must be
+
+
+```{r}
+my_string <- tolower(removePunctuation("Hello how are"))
+# number of words in the string  
+nb_words <- str_count(my_string,"\\S+")
+word_2=''
+word_3=''
+word_4=''
+# Extracting last words from the string
+word_1 = word(my_string,-1)
+if (nb_words >=2){word_2 = word(my_string,-2)} 
+if (nb_words >=3){word_3 = word(my_string,-3)} 
+if (nb_words >=4){word_4 = word(my_string,-4)} 
+```
+
+Getting data from the n-grams
+
+```{r}
+query5g <- paste0("SELECT * FROM fivegram_prob WHERE word4 LIKE '", word_1, 
+                 "' AND word3 LIKE '",word_2,
+                 "' AND word2 LIKE '",word_3,
+                 "' AND word1 LIKE '",word_4,"' LIMIT 3")
+
+query4g <- paste0("SELECT * FROM fourgram_prob WHERE word3 LIKE '", word_1, 
+                 "' AND word2 LIKE '",word_2,
+                 "' AND word1 LIKE '",word_3,"' LIMIT 3")
+
+query3g <- paste0("SELECT * FROM trigram_prob WHERE word2 LIKE '", word_1, 
+                 "' AND word1 LIKE '",word_2,"' LIMIT 3")
+
+query2g <- paste0("SELECT * FROM bigram_prob WHERE word1 LIKE '", word_1,"' LIMIT 3")
+
+```
+
+Send the request to the database  
+
+```{r}
+dbGetQuery(mydb, query5g)
+dbGetQuery(mydb, query4g)
+dbGetQuery(mydb, query3g)
+dbGetQuery(mydb, query2g)
+```
+
+
+
+word5 = beer
+
+Hey sunshine, can you follow me and make me the
+
+Very early observations on the Bills game: Offense still struggling but the
+
+Go on a romantic date at the
+
+Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my
+
+
+
+```{r}
+myt_word1 <- 'and'
+myt_word2 <- 'be'
+myt_word3 <- 'on'
+myt_word4 <- 'my'
+```
+
+You're the reason why I smile everyday. Can you follow me please? It would mean the
+
+
+
+```{r}
+
+en_US_fivegram_prob %>% filter(word1 == myt_word1,word2 ==myt_word2,
+                               word3 == myt_word3,word4 ==myt_word4)
+
+
+
+```
+
+
+```{r}
+
+en_US_fourgram_prob %>% filter(word1 == myt_word2,word2 ==myt_word3,
+                               word3 == myt_word4)
+
+```
+
+word4 = world
+
+
+```{r}
+en_US_trigram_prob %>% filter(word1 == myt_word3,word2 ==myt_word4)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+# trigrams
+myt_word1 <- 'case'
+myt_word2 <- 'of'
+
+en_US_trigram_prob %>% filter(word1 == myt_word1,word2 ==myt_word2)
+
+
+# bigrams
+myb_word1 <- 'of'
+en_US_bigram_prob %>% filter(word1 == myb_word1)
+
+```
+
+This firts test shows that our model is inefficient.  
+As it is overfitted on stop words, it cannot build a correct prediction linked to the context.
+
+
+You're the reason why I smile everyday. Can you follow me please? It would mean the
+
+```{r}
+# trigrams
+myt_word1 <- 'mean'
+myt_word2 <- 'the'
+
+en_US_trigram_prob %>% filter(word1 == myt_word1,word2 ==myt_word2)
+
+
+# bigrams
+myb_word1 <- 'the'
+en_US_bigram_prob %>% filter(word1 == myb_word1)
+
+```
+
+
+
+Hey sunshine, can you follow me and make me the
+
+
+```{r}
+# trigrams
+myt_word1 <- 'me'
+myt_word2 <- 'the'
+
+en_US_trigram_prob %>% filter(word1 == myt_word1,word2 ==myt_word2)
+
+
+# bigrams
+myb_word1 <- 'the'
+en_US_bigram_prob %>% filter(word1 == myb_word1)
+
+```
+
+
+
+
+
+
+Very early observations on the Bills game: Offense still struggling but the
+
+Go on a romantic date at the
+
+Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my
+
+Ohhhhh #PointBreak is on tomorrow. Love that film and haven't seen it in quite some
+
+After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little
+
+Be grateful for the good times and keep the faith during the
+
+If this isn't the cutest thing you've ever seen, then you must be
+
+
+
+
+
+
+
+
+
+
+## Switching to a Markov Chain approach 
+
+https://rpubs.com/Argaadya/markov-chain
+
+```{r, cache=TRUE}
+load("en_US_trigram.Rda")
+en_US_trigram_markov <- en_US_trigram %>% filter(n>1) %>% pull(trigram)
+```
+
+Calling the markovchain package
+
+```{r}
+library(markovchain)
+```
+
+```{r}
+en_US_trigram_markov[150:200]
+```
+
+
+Fitting the model  
+
+```{r}
+markov_trigram <- markovchainFit(en_US_trigram_markov)
+```
+
+```{r}
+predictive_text <- function(text, num_word){
+   
+   suggest <- markov_trigram$estimate[ tolower(text), ] %>%
+   sort(decreasing = T) %>% 
+   head(num_word) 
+   
+   suggest <- suggest[ suggest > 0 ] %>% 
+   names() %>% 
+   str_extract(pattern = "\\s(.*)") %>% 
+   str_remove("[ ]") %>%  
+   str_extract(pattern = "\\s(.*)") %>% 
+   str_remove("[ ]")
+   
+   return(suggest)
+}
+
+predictive_text("would be a", 3)
+```
+
+```{r}
+markov_trigram$estimate[ tolower("would be a"), ]
+```
+
+
+
+
+```{r}
+myword1 <- 
+  
+```
+
+
+
+
+
+
+
+
+

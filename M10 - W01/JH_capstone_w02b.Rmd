@@ -121,6 +121,17 @@ As the purpose of this project is to predict from a first word what could be the
 Removing stop words is essential while dealing with content analysis of a text but this is not the purpose of this project.
 <br/>
 
+
+**Markov chain**  
+
+https://rpubs.com/Argaadya/markov-chain
+
+```{r}
+
+```
+
+
+
 ## EDA - Frequency of single words  
 
 As a first step, we can compare which are the most frequent words in the blogs, news and twitter datasets. The plots below identify the words with a frequency superior to 0.05%.  
