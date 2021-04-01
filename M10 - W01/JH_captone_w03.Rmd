@@ -32,14 +32,6 @@ load("en_US_fourgram.Rda")
 load("en_US_fivegram.Rda")
 
 
-##  Identification of words (without stopwords)
-
-
-
-
-
-
-
 ##  Splitting the words into distinct columns
 
 In order to setup of prediction environment, we need to be split our bigram data set into 2 columns : word1 and word 2 and split the data into 3 columns for the trigram.  
@@ -78,6 +70,8 @@ save(en_US_fivegram,file="en_US_fivegram_split.Rda")
 rm(en_US_fivegram)
 ```
 
+
+# Defining probabilities for predictions 
 
 Our prediction algorithm will be using probabilities to make a prediction of the next word. We can think about the following approach :  
 - taking word1 as an input argument, which probability is associated to word 2.  
@@ -120,11 +114,15 @@ save(en_US_fivegram_prob,file='en_US_fivegram_prob.Rda')
 
 
 
-## Proof of concept
+# Proof of concept
 
-The guy in front of me just bought a pound of bacon, a bouquet, and a case of
+Googling and reading discussions in the course forum helped me to clarify the strategy to be applied to this project.  
+Many mentors were underlying the importance of "keeping the model" simple.  
+This means that applying highly sophisticated techniques will not have a significant effect on containing the prediction error of the model.  
+That's why I decided to stick to my initial approach : prediction based on probabilities related to n-grams.  
 
-###  Using SQLite to speedup performances 
+
+##  Using SQLite to speedup performances - Building tables
 
 Tibbles are too small to perform search requests in large volume of data.
 Some web researches highlighted that using a SQLite database could contribute to significantly improve the performance of data retrieval.
@@ -178,10 +176,12 @@ dbDisconnect(mydb)
 
 
 
-## POC  
+##  Doing some tests
 
 ```{r}
 library(RSQLite)
+library(tm)
+library(stringr)
 ```
 
 Creating the connection to the database.
@@ -192,40 +192,43 @@ mydb <- dbConnect(RSQLite::SQLite(), "my-db.sqlite")
 
 # Setting the words for prediction  
 
-The guy in front of me just bought a pound of bacon, a bouquet, and a case of
-=> beer
+1) The guy in front of me just bought a pound of bacon, a bouquet, and a case of
+=> beer - OK
 
-You're the reason why I smile everyday. Can you follow me please? It would mean the
-=> world
-
-
-Hey sunshine, can you follow me and make me the
-=> happiest
-
-Very early observations on the Bills game: Offense still struggling but the
-=< best
+2) You're the reason why I smile everyday. Can you follow me please? It would mean the
+=> world - OK
 
 
-Go on a romantic date at the
-=< end
+3) Hey sunshine, can you follow me and make me the
+=> happiest - OK
 
-Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my
-=> way
+4) Very early observations on the Bills game: Offense still struggling but the
+=< players - random guessing // Defense.
 
-Ohhhhh #PointBreak is on tomorrow. Love that film and haven't seen it in quite some
-=> time
 
-After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little
-=> girl
+5) Go on a romantic date at the
+=> beach - OK
 
-Be grateful for the good times and keep the faith during the
-=> day
+6) Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my
+=> way - OK
+
+7) Ohhhhh #PointBreak is on tomorrow. Love that film and haven't seen it in quite some
+=> time - OK
+
+8) After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little
+=< random answer / fingers
+
+9) Be grateful for the good times and keep the faith during the
+=< bad - random guessing // OK for bad
 
 If this isn't the cutest thing you've ever seen, then you must be
 
+=< asleep - random guessing // insensitive - random guessing NOK
+
+
 
 ```{r}
-my_string <- tolower(removePunctuation("Hello how are"))
+my_string <- tolower(removePunctuation("Guy at my table's wife got up to go to the bathroom and I asked about dessert and he started telling me about his"))
 # number of words in the string  
 nb_words <- str_count(my_string,"\\S+")
 word_2=''
@@ -244,16 +247,16 @@ Getting data from the n-grams
 query5g <- paste0("SELECT * FROM fivegram_prob WHERE word4 LIKE '", word_1, 
                  "' AND word3 LIKE '",word_2,
                  "' AND word2 LIKE '",word_3,
-                 "' AND word1 LIKE '",word_4,"' LIMIT 3")
+                 "' AND word1 LIKE '",word_4,"' LIMIT 30")
 
 query4g <- paste0("SELECT * FROM fourgram_prob WHERE word3 LIKE '", word_1, 
                  "' AND word2 LIKE '",word_2,
-                 "' AND word1 LIKE '",word_3,"' LIMIT 3")
+                 "' AND word1 LIKE '",word_3,"' LIMIT 30")
 
 query3g <- paste0("SELECT * FROM trigram_prob WHERE word2 LIKE '", word_1, 
-                 "' AND word1 LIKE '",word_2,"' LIMIT 3")
+                 "' AND word1 LIKE '",word_2,"' LIMIT 30")
 
-query2g <- paste0("SELECT * FROM bigram_prob WHERE word1 LIKE '", word_1,"' LIMIT 3")
+query2g <- paste0("SELECT * FROM bigram_prob WHERE word1 LIKE '", word_1,"' LIMIT 30")
 
 ```
 
@@ -268,46 +271,6 @@ dbGetQuery(mydb, query2g)
 
 
 
-word5 = beer
-
-Hey sunshine, can you follow me and make me the
-
-Very early observations on the Bills game: Offense still struggling but the
-
-Go on a romantic date at the
-
-Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my
-
-
-
-```{r}
-myt_word1 <- 'and'
-myt_word2 <- 'be'
-myt_word3 <- 'on'
-myt_word4 <- 'my'
-```
-
-You're the reason why I smile everyday. Can you follow me please? It would mean the
-
-
-
-```{r}
-
-en_US_fivegram_prob %>% filter(word1 == myt_word1,word2 ==myt_word2,
-                               word3 == myt_word3,word4 ==myt_word4)
-
-
-
-```
-
-
-```{r}
-
-en_US_fourgram_prob %>% filter(word1 == myt_word2,word2 ==myt_word3,
-                               word3 == myt_word4)
-
-```
-
 word4 = world
 
 
@@ -315,161 +278,15 @@ word4 = world
 en_US_trigram_prob %>% filter(word1 == myt_word3,word2 ==myt_word4)
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-# trigrams
-myt_word1 <- 'case'
-myt_word2 <- 'of'
-
-en_US_trigram_prob %>% filter(word1 == myt_word1,word2 ==myt_word2)
-
-
-# bigrams
-myb_word1 <- 'of'
-en_US_bigram_prob %>% filter(word1 == myb_word1)
-
-```
-
-This firts test shows that our model is inefficient.  
-As it is overfitted on stop words, it cannot build a correct prediction linked to the context.
-
-
-You're the reason why I smile everyday. Can you follow me please? It would mean the
-
-```{r}
-# trigrams
-myt_word1 <- 'mean'
-myt_word2 <- 'the'
-
-en_US_trigram_prob %>% filter(word1 == myt_word1,word2 ==myt_word2)
-
-
-# bigrams
-myb_word1 <- 'the'
-en_US_bigram_prob %>% filter(word1 == myb_word1)
-
-```
-
-
-
-Hey sunshine, can you follow me and make me the
-
-
-```{r}
-# trigrams
-myt_word1 <- 'me'
-myt_word2 <- 'the'
-
-en_US_trigram_prob %>% filter(word1 == myt_word1,word2 ==myt_word2)
-
-
-# bigrams
-myb_word1 <- 'the'
-en_US_bigram_prob %>% filter(word1 == myb_word1)
-
-```
-
-
-
-
-
-
-Very early observations on the Bills game: Offense still struggling but the
-
-Go on a romantic date at the
-
-Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my
-
-Ohhhhh #PointBreak is on tomorrow. Love that film and haven't seen it in quite some
-
-After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little
-
-Be grateful for the good times and keep the faith during the
-
-If this isn't the cutest thing you've ever seen, then you must be
-
-
-
-
-
-
-
-
-
-
-## Switching to a Markov Chain approach 
-
-https://rpubs.com/Argaadya/markov-chain
-
-```{r, cache=TRUE}
-load("en_US_trigram.Rda")
-en_US_trigram_markov <- en_US_trigram %>% filter(n>1) %>% pull(trigram)
-```
-
-Calling the markovchain package
-
-```{r}
-library(markovchain)
-```
-
-```{r}
-en_US_trigram_markov[150:200]
-```
-
-
-Fitting the model  
-
-```{r}
-markov_trigram <- markovchainFit(en_US_trigram_markov)
-```
-
-```{r}
-predictive_text <- function(text, num_word){
-   
-   suggest <- markov_trigram$estimate[ tolower(text), ] %>%
-   sort(decreasing = T) %>% 
-   head(num_word) 
-   
-   suggest <- suggest[ suggest > 0 ] %>% 
-   names() %>% 
-   str_extract(pattern = "\\s(.*)") %>% 
-   str_remove("[ ]") %>%  
-   str_extract(pattern = "\\s(.*)") %>% 
-   str_remove("[ ]")
-   
-   return(suggest)
-}
-
-predictive_text("would be a", 3)
-```
-
-```{r}
-markov_trigram$estimate[ tolower("would be a"), ]
-```
-
-
-
-
-```{r}
-myword1 <- 
-  
-```
-
+### Observations  
+
+This is quite close to a "brute force" approach.  
+The more data you get, the best predictions you get in return.  
+This approach is quite similar to a KNN algorithm.  
+The system works more or less like a memory : it restitutes what it has already seen !
+
+The accuracy of the predictions will be improved by :  
+- extending the sample size (currently limited to 5% of the overall datasets)
 
 
 

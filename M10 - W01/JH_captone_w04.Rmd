@@ -1,0 +1,558 @@
+---
+title: "JH_captone_w04"
+author: "shostiou"
+date: "25/03/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries  
+
+{r, echo = FALSE,message=FALSE,warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(tidytext)
+library(readtext)
+library(corpus)
+library(R.utils)
+library(tm)
+library(stringr)
+
+
+
+# Introduction
+
+The purpose of the week is to fine tune the definition and performances of our model.  
+
+## Course instructions  
+
+**Tasks to accomplish**  
+Explore new models and data to improve your predictive model.  
+Evaluate your new predictions on both accuracy and efficiency.  
+
+**Questions to consider**  
+
+- What are some alternative data sets you could consider using?  
+- What are ways in which the n-gram model may be inefficient?  
+- What are the most commonly missed n-grams? Can you think of a reason why they would be missed and fix that?   
+- What are some other things that other people have tried to improve their model?  
+- Can you estimate how uncertain you are about the words you are predicting?  
+
+
+# Discussions  
+
+Based on information collected in the forums, being able to extend the size of the training set is a key component of success.  
+My initial approach was restricted to a 5% random sampling of the data.  
+I need, at least, to be embed 80 to 90% of the data in the model definition.  
+
+Due to memory usage constraints, extending the size of the data size will require me to collect small portions of the data and to merge them, at the end.  
+
+In addition, for performance issues, it seems highly recommended to use the following tricks :  
+- use data.tables and not datframe to store / retrieve information  
+- use quanteda to build n-grams  
+- store n-grams into a SQLite database for fast retrieval
+
+
+# Libraries
+
+```{r, message=FALSE,warning=FALSE}
+library(quanteda)
+library(readtext)
+library(R.utils)
+library(RSQLite)
+```
+
+# Reading the text files  
+
+During this phase, the 3 text files are combined into a single string vector.  
+A copy of this vector is then stored into a local .Rda file (which, then can easily be retrieved.)
+
+```{r}
+# Building the file directory  
+file_dir <- getwd()
+file_dir <- paste0(file_dir,'/data/final/en_US/')
+# files name to open
+file_name <- c('en_US.blogs.txt','en_US.news.txt','en_US.twitter.txt')
+
+```
+
+Reading text files and merging them into a single vector
+
+```{r}
+# file path  
+file_path = paste0(file_dir,file_name[1])
+en_us_blogs <- readtext(file_path)
+# file path  
+file_path = paste0(file_dir,file_name[2])
+en_us_news <- readtext(file_path)
+# file path  
+file_path = paste0(file_dir,file_name[3])
+en_us_twitter <- readtext(file_path)
+
+# Combination  
+en_us_full <- rbind(en_us_blogs,en_us_news)
+en_us_full <- rbind(en_us_full,en_us_twitter)
+# Freeing memory
+rm(en_us_blogs)
+rm(en_us_news)
+rm(en_us_twitter)
+
+
+```
+
+Removing the non ASCII characters
+
+```{r}
+# Removing non ASCII characters  
+en_us_full<-iconv(en_us_full, "latin1", "ASCII", sub="")
+
+```
+
+
+```{r}
+# Construct a corpus from a character vector
+en_us_full <- corpus(en_us_full)
+```
+
+```{r}
+# Tokenize corpus to sentences  
+en_us_full <- corpus_reshape(en_us_full, to = "sentences")
+
+```
+
+
+Create a local copy of the vector
+
+```{r}
+save(en_us_full,file="corpus/en_us_full.Rda")
+```
+
+
+# Random sampling
+
+Due to the large volume of data and to the limited resources of the machine used to build this project (4 cores /  8 Gb RAM), data processing (tokenization / n-grams) cannot be achieved in a single step.  
+My strategy is to use random sampling without replacement.  
+Multiple iterations of the following steps will be done :  
+- create a sample of the data (ie. 1000 lines of text)  
+- build n-grams out of those lines  
+- store the results in a SQLLite database (for further usage)  
+
+
+```{r, message=FALSE, warning=FALSE}
+library(quanteda)
+library(stringr)
+library(RSQLite)
+```
+
+
+```{r}
+# If not in memory, load the data
+load("corpus/en_us_full.Rda")
+```
+
+
+
+Please note that this function was taken from the following github repo :  
+https://gist.github.com/CateGitau/05e6ff80b2a3aaa58236067811cee44e
+
+
+```{r}
+Textprocessing <- function(x)
+  {gsub("http[[:alnum:]]*",'', x)
+  gsub('http\\S+\\s*', '', x) ## Remove URLs
+  gsub('\\b+RT', '', x) ## Remove RT
+  gsub('#\\S+', '', x) ## Remove Hashtags
+  gsub('@\\S+', '', x) ## Remove Mentions
+  gsub('[[:cntrl:]]', '', x) ## Remove Controls and special characters
+  gsub("\\d", '', x) ## Remove Controls and special characters
+  gsub('[[:punct:]]', '', x) ## Remove Punctuations
+  gsub("^[[:space:]]*","",x) ## Remove leading whitespaces
+  gsub("[[:space:]]*$","",x) ## Remove trailing whitespaces
+  gsub(' +',' ',x) ## Remove extra whitespaces
+}
+```
+
+
+```{r}
+# Setting the execution environment  
+sample_size <- 10000
+# Looping over and over  
+for (i in 1:100){ 
+    # Setting the seeds
+    set.seed(i*100+050977)
+    # Getting a sample of the corpus  
+    en_us_sample <- corpus_sample(en_us_full,size=sample_size, replace = FALSE)
+    # creating tokens out of the sample
+    en_us_sample_token <- tokens(en_us_sample,remove_punct = TRUE,
+                                 remove_numbers = TRUE, remove_symbols = TRUE,
+                                 remove_url = TRUE)
+    en_us_sample_token <- tokens_tolower(en_us_sample_token) 
+    # building n-grams
+    en_us_sample_ngrams <- tokens_ngrams(en_us_sample_token, n = 2:6) 
+    # building a document frame matrix
+    en_us_sample_dfm <- dfm(en_us_sample_ngrams)
+    en_us_sample_list <- convert(en_us_sample_dfm,to="tripletlist")$feature
+    # en_us_sample_list <- Textprocessing(en_us_sample_list)
+    # splitting the string and removing hastags
+    predictors <- str_replace_all(word(en_us_sample_list, end=-2,sep='_'),'_',' ')
+    predicted <- word(en_us_sample_list, start=-1,sep='_')
+    # Temporary Tibble  
+    temp_df <- data.frame(predictors=predictors,predicted=predicted)
+    # Writting data to SQLLite
+    mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db.sqlite")
+    dbWriteTable(mydb, name="n_grams", value=temp_df, append=TRUE)
+    dbDisconnect(mydb)
+}
+```
+```{r}
+# Temporary Tibble  
+temp_df <- data.frame(predictors='test',predicted='test',nb_predicted=1)
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db.sqlite")
+dbWriteTable(mydb, name="ngrams_count", value=temp_df, append=TRUE)
+dbDisconnect(mydb)
+
+
+```
+
+
+```{r}
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db.sqlite")
+dbExecute(mydb, 'INSERT INTO ngrams_count SELECT predictors, predicted,COUNT(predicted) as nb_predicted FROM n_grams GROUP BY predictors,predicted')
+# dbGetQuery(mydb, 'SELECT * FROM n_grams')
+dbDisconnect(mydb)
+```
+
+Calling the library to measure the execution time  
+```{r}
+library(tictoc)
+```
+
+
+6.44 sec required to find an answer for "in order to" with the n_grams table loaded.
+5.934 sec required with the n_grams table dropped  
+the next step is to suppress records of only 1 occurence  (DELETE FROM ngrams_count WHERE nb_predicted <= 1) gives Updated Rows	27776897.
+Thanks to this suppression the answer is given in 0.7 sec.
+After suppression of n = 2
+
+```{r}
+tic("predicting a word")
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db.sqlite")
+dbGetQuery(mydb, 'SELECT * FROM ngrams_count WHERE predictors IN ("seen it in quite some","it in quite some","in quite some","quite some") ORDER BY nb_predicted DESC')
+dbDisconnect(mydb)
+toc()
+```
+
+
+
+
+
+
+
+
+
+Looping over the samples
+
+```{r}
+
+# Setting the seeds
+set.seed(05091810)
+
+
+  # Temporary Tibble  
+  temp_tibble <- tibble(dataset=character(),text=character())
+  
+  # Creating an index of samples
+  sample_of_lines <- sample(seq(1,raw_text_lines,by = 1), 
+                            size = round(raw_text_lines/20), replace = F)
+
+  # Adding to the tibble
+  # A regex is used to remove the file extension. 
+  temp_tibble <- tibble(dataset=sub('\\.txt$', '', f_name),
+                        text=(readLines(file_path)[sample_of_lines]))
+  en_US_tibble <- rbind(en_US_tibble,temp_tibble)
+
+
+
+# Freeing memory by suppressing unnecessary variables
+rm(temp_tibble)
+
+
+```
+
+```
+
+
+
+
+
+
+
+# This is old stuff 
+
+
+```{r}
+# Construct a corpus from a character vector
+en_us_full <- corpus(en_us_full)
+```
+
+```{r}
+# Tokenize corpus to sentences  
+en_us_full <- corpus_reshape(en_us_full, to = "sentences")
+
+```
+
+```{r}
+save(en_us_full,file="corpus/en_us_full.Rda")
+```
+
+Loading the file
+
+```{r}
+load("corpus/en_us_full.Rda")
+```
+
+```{r}
+x_en_us_full <- tokens(en_us_full,remove_punct = TRUE)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Reading news text file
+
+```{r}
+# file path  
+file_path = paste0(file_dir,file_name[2])
+en_us_news <- readtext(file_path)
+```
+
+```{r}
+# Removing non ASCII characters  
+en_us_news<-iconv(en_us_news, "latin1", "ASCII", sub="")
+
+```
+
+```{r}
+# Construct a corpus from a character vector
+x_en_us_news <- corpus(en_us_news)
+```
+
+```{r}
+# Tokenize corpus to sentences  
+x_en_us_news <- corpus_reshape(x_en_us_news, to = "sentences")
+
+```
+
+```{r}
+save(x_en_us_news,file="corpus/x_en_us_news.Rda")
+```
+
+
+Reading twitter text file
+
+```{r}
+# file path  
+file_path = paste0(file_dir,file_name[3])
+en_us_twitter <- readtext(file_path)
+```
+
+```{r}
+# Removing non ASCII characters  
+en_us_twitter<-iconv(en_us_twitter, "latin1", "ASCII", sub="")
+
+```
+
+```{r}
+# Construct a corpus from a character vector
+x_en_us_twitter <- corpus(en_us_twitter)
+```
+
+```{r}
+# Tokenize corpus to sentences  
+x_en_us_twitter <- corpus_reshape(x_en_us_twitter, to = "sentences")
+
+```
+
+```{r}
+save(x_en_us_twitter,file="corpus/x_en_us_twitter.Rda")
+```
+
+```{r}
+rbind(en_us_blogs,en_us_news)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+#  Doing some tests
+
+```{r}
+library(RSQLite)
+library(tm)
+library(stringr)
+```
+
+Creating the connection to the database.
+
+```{r}
+mydb <- dbConnect(RSQLite::SQLite(), "my-db.sqlite")
+```
+
+# Setting the words for prediction  
+
+1) The guy in front of me just bought a pound of bacon, a bouquet, and a case of
+=> beer - OK
+
+2) You're the reason why I smile everyday. Can you follow me please? It would mean the
+=> world - OK
+
+
+3) Hey sunshine, can you follow me and make me the
+=> happiest - OK
+
+4) Very early observations on the Bills game: Offense still struggling but the
+=< players - random guessing // Defense.
+
+
+5) Go on a romantic date at the
+=> beach - OK
+
+6) Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my
+=> way - OK
+
+7) Ohhhhh #PointBreak is on tomorrow. Love that film and haven't seen it in quite some
+=> time - OK
+
+8) After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little
+=< random answer / fingers
+
+9) Be grateful for the good times and keep the faith during the
+=< bad - random guessing // OK for bad
+
+If this isn't the cutest thing you've ever seen, then you must be
+
+=< asleep - random guessing // insensitive - random guessing NOK
+
+
+
+```{r}
+my_string <- tolower(removePunctuation("Guy at my table's wife got up to go to the bathroom and I asked about dessert and he started telling me about his"))
+# number of words in the string  
+nb_words <- str_count(my_string,"\\S+")
+word_2=''
+word_3=''
+word_4=''
+# Extracting last words from the string
+word_1 = word(my_string,-1)
+if (nb_words >=2){word_2 = word(my_string,-2)} 
+if (nb_words >=3){word_3 = word(my_string,-3)} 
+if (nb_words >=4){word_4 = word(my_string,-4)} 
+```
+
+Getting data from the n-grams
+
+```{r}
+query5g <- paste0("SELECT * FROM fivegram_prob WHERE word4 LIKE '", word_1, 
+                 "' AND word3 LIKE '",word_2,
+                 "' AND word2 LIKE '",word_3,
+                 "' AND word1 LIKE '",word_4,"' LIMIT 30")
+
+query4g <- paste0("SELECT * FROM fourgram_prob WHERE word3 LIKE '", word_1, 
+                 "' AND word2 LIKE '",word_2,
+                 "' AND word1 LIKE '",word_3,"' LIMIT 30")
+
+query3g <- paste0("SELECT * FROM trigram_prob WHERE word2 LIKE '", word_1, 
+                 "' AND word1 LIKE '",word_2,"' LIMIT 30")
+
+query2g <- paste0("SELECT * FROM bigram_prob WHERE word1 LIKE '", word_1,"' LIMIT 30")
+
+```
+
+Send the request to the database  
+
+```{r}
+dbGetQuery(mydb, query5g)
+dbGetQuery(mydb, query4g)
+dbGetQuery(mydb, query3g)
+dbGetQuery(mydb, query2g)
+```
+
+
+
+word4 = world
+
+
+```{r}
+en_US_trigram_prob %>% filter(word1 == myt_word3,word2 ==myt_word4)
+```
+
+### Observations  
+
+This is quite close to a "brute force" approach.  
+The more data you get, the best predictions you get in return.  
+This approach is quite similar to a KNN algorithm.  
+The system works more or less like a memory : it restitutes what it has already seen !
+
+The accuracy of the predictions will be improved by :  
+- extending the sample size (currently limited to 5% of the overall datasets)
+
+
+
+
+
+
+
+
