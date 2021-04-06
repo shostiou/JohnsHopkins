@@ -161,57 +161,90 @@ https://gist.github.com/CateGitau/05e6ff80b2a3aaa58236067811cee44e
 
 ```{r}
 Textprocessing <- function(x)
-  {gsub("http[[:alnum:]]*",'', x)
-  gsub('http\\S+\\s*', '', x) ## Remove URLs
-  gsub('\\b+RT', '', x) ## Remove RT
-  gsub('#\\S+', '', x) ## Remove Hashtags
-  gsub('@\\S+', '', x) ## Remove Mentions
-  gsub('[[:cntrl:]]', '', x) ## Remove Controls and special characters
-  gsub("\\d", '', x) ## Remove Controls and special characters
-  gsub('[[:punct:]]', '', x) ## Remove Punctuations
-  gsub("^[[:space:]]*","",x) ## Remove leading whitespaces
-  gsub("[[:space:]]*$","",x) ## Remove trailing whitespaces
-  gsub(' +',' ',x) ## Remove extra whitespaces
+  {x<- gsub("http[[:alnum:]]*",'', x)
+  x<-gsub('http\\S+\\s*', '', x) ## Remove URLs
+  x<-gsub('\\b+RT', '', x) ## Remove RT
+  x<-gsub('#\\S+', '', x) ## Remove Hashtags
+  x<-gsub('@\\S+', '', x) ## Remove Mentions
+  x<-gsub('[[:cntrl:]]', '', x) ## Remove Controls and special characters
+  x<-gsub("\\d", '', x) ## Remove Controls and special characters
+  x<-gsub('[[:punct:]]', '', x) ## Remove Punctuations
+  x<-gsub("^[[:space:]]*","",x) ## Remove leading whitespaces
+  x<-gsub("[[:space:]]*$","",x) ## Remove trailing whitespaces
+  x<-gsub(' +',' ',x) ## Remove extra whitespaces
 }
 ```
 
 
-```{r}
+```{r, message=FALSE,warning=FALSE}
 # Setting the execution environment  
-sample_size <- 10000
+sample_size <- 100
 # Looping over and over  
-for (i in 1:100){ 
+for (i in 1:30000){ 
     # Setting the seeds
     set.seed(i*100+050977)
     # Getting a sample of the corpus  
     en_us_sample <- corpus_sample(en_us_full,size=sample_size, replace = FALSE)
     # creating tokens out of the sample
-    en_us_sample_token <- tokens(en_us_sample,remove_punct = TRUE,
+    en_us_sample_token <- tokens(en_us_sample,remove_punct = TRUE,preserve_tags = FALSE,
                                  remove_numbers = TRUE, remove_symbols = TRUE,
-                                 remove_url = TRUE)
+                                 remove_url = TRUE, remove_separators = TRUE,
+                                 split_hyphens= TRUE, verbose = FALSE)
     en_us_sample_token <- tokens_tolower(en_us_sample_token) 
     # building n-grams
-    en_us_sample_ngrams <- tokens_ngrams(en_us_sample_token, n = 2:6) 
+    en_us_sample_ngrams2 <- tokens_ngrams(en_us_sample_token, n = 2)
+    en_us_sample_ngrams3 <- tokens_ngrams(en_us_sample_token, n = 3) 
+    en_us_sample_ngrams4 <- tokens_ngrams(en_us_sample_token, n = 4) 
+    en_us_sample_ngrams5 <- tokens_ngrams(en_us_sample_token, n = 5) 
+    en_us_sample_ngrams6 <- tokens_ngrams(en_us_sample_token, n = 6) 
     # building a document frame matrix
-    en_us_sample_dfm <- dfm(en_us_sample_ngrams)
-    en_us_sample_list <- convert(en_us_sample_dfm,to="tripletlist")$feature
+    en_us_sample_dfm2 <- dfm(en_us_sample_ngrams2)
+    en_us_sample_dfm3 <- dfm(en_us_sample_ngrams3)
+    en_us_sample_dfm4 <- dfm(en_us_sample_ngrams4)
+    en_us_sample_dfm5 <- dfm(en_us_sample_ngrams5)
+    en_us_sample_dfm6 <- dfm(en_us_sample_ngrams6)
+    en_us_sample_list2 <- convert(en_us_sample_dfm2,to="tripletlist")$feature
+    en_us_sample_list3 <- convert(en_us_sample_dfm3,to="tripletlist")$feature
+    en_us_sample_list4 <- convert(en_us_sample_dfm4,to="tripletlist")$feature
+    en_us_sample_list5 <- convert(en_us_sample_dfm5,to="tripletlist")$feature
+    en_us_sample_list6 <- convert(en_us_sample_dfm6,to="tripletlist")$feature
     # en_us_sample_list <- Textprocessing(en_us_sample_list)
     # splitting the string and removing hastags
-    predictors <- str_replace_all(word(en_us_sample_list, end=-2,sep='_'),'_',' ')
-    predicted <- word(en_us_sample_list, start=-1,sep='_')
+    predictors2 <- str_replace_all(word(en_us_sample_list2, end=-2,sep='_'),'_',' ')
+    predicted2 <- word(en_us_sample_list2, start=-1,sep='_')
+    predictors3 <- str_replace_all(word(en_us_sample_list3, end=-2,sep='_'),'_',' ')
+    predicted3 <- word(en_us_sample_list3, start=-1,sep='_')
+    predictors4 <- str_replace_all(word(en_us_sample_list4, end=-2,sep='_'),'_',' ')
+    predicted4 <- word(en_us_sample_list4, start=-1,sep='_')
+    predictors5 <- str_replace_all(word(en_us_sample_list5, end=-2,sep='_'),'_',' ')
+    predicted5 <- word(en_us_sample_list5, start=-1,sep='_')
+    predictors6 <- str_replace_all(word(en_us_sample_list6, end=-2,sep='_'),'_',' ')
+    predicted6 <- word(en_us_sample_list6, start=-1,sep='_')
     # Temporary Tibble  
-    temp_df <- data.frame(predictors=predictors,predicted=predicted)
+    temp_df2 <- data.frame(predictors=predictors2,predicted=predicted2)
+    temp_df3 <- data.frame(predictors=predictors3,predicted=predicted3)
+    temp_df4 <- data.frame(predictors=predictors4,predicted=predicted4)
+    temp_df5 <- data.frame(predictors=predictors5,predicted=predicted5)
+    temp_df6 <- data.frame(predictors=predictors6,predicted=predicted6)
     # Writting data to SQLLite
-    mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db.sqlite")
-    dbWriteTable(mydb, name="n_grams", value=temp_df, append=TRUE)
+    mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db2.sqlite")
+    dbWriteTable(mydb, name="n_grams2", value=temp_df2, append=TRUE)
+    dbWriteTable(mydb, name="n_grams3", value=temp_df3, append=TRUE)
+    dbWriteTable(mydb, name="n_grams4", value=temp_df4, append=TRUE)
+    dbWriteTable(mydb, name="n_grams5", value=temp_df5, append=TRUE)
+    dbWriteTable(mydb, name="n_grams6", value=temp_df6, append=TRUE)
     dbDisconnect(mydb)
 }
 ```
 ```{r}
 # Temporary Tibble  
 temp_df <- data.frame(predictors='test',predicted='test',nb_predicted=1)
-mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db.sqlite")
-dbWriteTable(mydb, name="ngrams_count", value=temp_df, append=TRUE)
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db2.sqlite")
+dbWriteTable(mydb, name="ngrams_count2", value=temp_df, append=TRUE)
+dbWriteTable(mydb, name="ngrams_count3", value=temp_df, append=TRUE)
+dbWriteTable(mydb, name="ngrams_count4", value=temp_df, append=TRUE)
+dbWriteTable(mydb, name="ngrams_count5", value=temp_df, append=TRUE)
+dbWriteTable(mydb, name="ngrams_count6", value=temp_df, append=TRUE)
 dbDisconnect(mydb)
 
 
@@ -219,11 +252,238 @@ dbDisconnect(mydb)
 
 
 ```{r}
-mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db.sqlite")
-dbExecute(mydb, 'INSERT INTO ngrams_count SELECT predictors, predicted,COUNT(predicted) as nb_predicted FROM n_grams GROUP BY predictors,predicted')
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db2.sqlite")
+dbExecute(mydb, 'INSERT INTO ngrams_count2 SELECT predictors, predicted,COUNT(predicted) as nb_predicted FROM n_grams2 GROUP BY predictors,predicted')
 # dbGetQuery(mydb, 'SELECT * FROM n_grams')
 dbDisconnect(mydb)
 ```
+
+```{r}
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db2.sqlite")
+dbExecute(mydb, 'INSERT INTO ngrams_count3 SELECT predictors, predicted,COUNT(predicted) as nb_predicted FROM n_grams3 GROUP BY predictors,predicted')
+# dbGetQuery(mydb, 'SELECT * FROM n_grams')
+dbDisconnect(mydb)
+```
+
+
+```{r}
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db2.sqlite")
+dbExecute(mydb, 'INSERT INTO ngrams_count4 SELECT predictors, predicted,COUNT(predicted) as nb_predicted FROM n_grams4 GROUP BY predictors,predicted')
+# dbGetQuery(mydb, 'SELECT * FROM n_grams')
+dbDisconnect(mydb)
+```
+
+
+```{r}
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db2.sqlite")
+dbExecute(mydb, 'INSERT INTO ngrams_count5 SELECT predictors, predicted,COUNT(predicted) as nb_predicted FROM n_grams5 GROUP BY predictors,predicted')
+# dbGetQuery(mydb, 'SELECT * FROM n_grams')
+dbDisconnect(mydb)
+```
+
+
+```{r}
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db2.sqlite")
+dbExecute(mydb, 'INSERT INTO ngrams_count6 SELECT predictors, predicted,COUNT(predicted) as nb_predicted FROM n_grams6 GROUP BY predictors,predicted')
+# dbGetQuery(mydb, 'SELECT * FROM n_grams')
+dbDisconnect(mydb)
+```
+
+
+1) When you breathe, I want to be the air for you. I'll be there for you, I'd live and I'd
+die
+
+2) Guy at my table's wife got up to go to the bathroom and I asked about dessert and he started telling me about his
+marital
+
+3)I'd give anything to see arctic monkeys this
+=> weekend
+
+4) Talking to your mom has the same effect as a hug and helps reduce your
+=> stress
+
+5) When you were in Holland you were like 1 inch away from me but you hadn't time to take a
+=> look
+
+6) I'd just like all of these questions answered, a presentation of evidence, and a jury to settle the
+=> case
+
+7) I can't deal with unsymetrical things. I can't even hold an uneven number of bags of groceries in each
+=> hand
+
+8) Every inch of you is perfect from the bottom to the
+=> top
+
+
+9) I’m thankful my childhood was filled with imagination and bruises from playing
+=> outside
+
+
+10) like how the same people are in almost all of Adam Sandler
+=> movies
+
+
+
+
+# Testing
+
+Improvements  
+Not sure 6-grams gives a lot of advantages. If suppressed starting from 38.3 sec to 23 sec.  
+It could be interesting to do some filtering  
+ie. suppress of 2-grams with nb of occurences < 5 to keep only the most informative
+suppression of 3-grams with nb of occurences < 5
+suppression of 4-grams with nb of occurences < 4
+suppression of 5-grams with nb of occurences < 3
+
+Let's do some house cleaning
+
+```{r}
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db2.sqlite")
+dbExecute(mydb, "DELETE FROM ngrams_count2 WHERE nb_predicted < 5")
+dbExecute(mydb, "DELETE FROM ngrams_count3 WHERE nb_predicted < 5")
+dbExecute(mydb, "DELETE FROM ngrams_count4 WHERE nb_predicted < 4")
+dbExecute(mydb, "DELETE FROM ngrams_count5 WHERE nb_predicted < 3")
+dbExecute(mydb, "DELETE FROM ngrams_count6 WHERE nb_predicted < 2")
+
+dbExecute(mydb, "DELETE FROM ngrams_count2 WHERE INSTR(predictors,'#')")
+dbExecute(mydb, "DELETE FROM ngrams_count3 WHERE INSTR(predictors,'#')")
+dbExecute(mydb, "DELETE FROM ngrams_count4 WHERE INSTR(predictors,'#')")
+dbExecute(mydb, "DELETE FROM ngrams_count5 WHERE INSTR(predictors,'#')")
+dbExecute(mydb, "DELETE FROM ngrams_count6 WHERE INSTR(predictors,'#')")
+
+dbDisconnect(mydb)
+```
+
+after house cleaning...
+switching from 23 sec to 1.5 sec.
+
+
+```{r}
+tic("predicting a word")
+my_string <- tolower(removePunctuation("I want to break"))
+# number of words in the string  
+nb_words <- str_count(my_string,"\\S+")
+word_2=''
+word_3=''
+word_4=''
+word_5=''
+# Extracting last words from the string
+word_1 = word(my_string,-1)
+str_ng2 <- word_1
+if (nb_words >=2){word_2 = word(my_string,-2)
+  str_ng3 <- paste(word_2,word_1)} 
+if (nb_words >=3){word_3 = word(my_string,-3)
+   str_ng4 <- paste(word_3,word_2,word_1)               
+} 
+if (nb_words >=4){word_4 = word(my_string,-4)
+  str_ng5 <- paste(word_4,word_3,word_2,word_1)} 
+if (nb_words >=5){word_5 = word(my_string,-5)
+  str_ng6 <- paste(word_5,word_4,word_3,word_2,word_1)} 
+# Building queries
+query_6g <- paste0("SELECT * FROM ngrams_count6 WHERE predictors LIKE '",str_ng6,"' ORDER BY nb_predicted DESC LIMIT 10")
+query_5g <- paste0("SELECT * FROM ngrams_count5 WHERE predictors LIKE '",str_ng5,"' ORDER BY nb_predicted DESC LIMIT 10")
+query_4g <- paste0("SELECT * FROM ngrams_count4 WHERE predictors LIKE '",str_ng4,"' ORDER BY nb_predicted DESC LIMIT 10")
+query_3g <- paste0("SELECT * FROM ngrams_count3 WHERE predictors LIKE '",str_ng3,"' ORDER BY nb_predicted DESC LIMIT 10")
+query_2g <- paste0("SELECT * FROM ngrams_count2 WHERE predictors LIKE '",str_ng2,"' ORDER BY nb_predicted DESC LIMIT 10")
+# Checnking database  
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db2.sqlite")
+# dbGetQuery(mydb, query_6g)
+dbGetQuery(mydb, query_5g)
+dbGetQuery(mydb, query_4g)
+dbGetQuery(mydb, query_3g)
+dbGetQuery(mydb, query_2g)
+dbDisconnect(mydb)
+toc()
+
+
+```
+
+Building querries
+
+```{r}
+query_6g <- paste0("SELECT * FROM ngrams_count6 WHERE predictors LIKE '",str_ng6,"' ORDER BY nb_predicted DESC LIMIT 20")
+query_5g <- paste0("SELECT * FROM ngrams_count5 WHERE predictors LIKE '",str_ng5,"' ORDER BY nb_predicted DESC LIMIT 20")
+query_4g <- paste0("SELECT * FROM ngrams_count4 WHERE predictors LIKE '",str_ng4,"' ORDER BY nb_predicted DESC LIMIT 20")
+query_3g <- paste0("SELECT * FROM ngrams_count3 WHERE predictors LIKE '",str_ng3,"' ORDER BY nb_predicted DESC LIMIT 20")
+query_2g <- paste0("SELECT * FROM ngrams_count2 WHERE predictors LIKE '",str_ng2,"' ORDER BY nb_predicted DESC LIMIT 20")
+```
+
+
+
+
+
+```{r}
+tic("predicting a word")
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db2.sqlite")
+dbGetQuery(mydb, query_6g)
+dbGetQuery(mydb, query_5g)
+dbGetQuery(mydb, query_4g)
+dbGetQuery(mydb, query_3g)
+dbGetQuery(mydb, query_2g)
+dbDisconnect(mydb)
+toc()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+I'd give anything to see arctic monkeys this
+
+
+```{r}
+tic("predicting a word")
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db2.sqlite")
+dbGetQuery(mydb, 'SELECT * FROM ngrams_count6 WHERE predictors IN ("to see arctic monkeys this") ORDER BY nb_predicted DESC')
+dbDisconnect(mydb)
+toc()
+```
+
+
+```{r}
+tic("predicting a word")
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db2.sqlite")
+dbGetQuery(mydb, 'SELECT * FROM ngrams_count5 WHERE predictors IN ("see arctic monkeys this") ORDER BY nb_predicted DESC')
+dbDisconnect(mydb)
+toc()
+```
+
+```{r}
+tic("predicting a word")
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db2.sqlite")
+dbGetQuery(mydb, 'SELECT * FROM ngrams_count4 WHERE predictors IN ("arctic monkeys this") ORDER BY nb_predicted DESC')
+dbDisconnect(mydb)
+toc()
+```
+
+```{r}
+tic("predicting a word")
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db2.sqlite")
+dbGetQuery(mydb, 'SELECT * FROM ngrams_count2 WHERE predictors LIKE "this" ORDER BY nb_predicted DESC')
+dbDisconnect(mydb)
+toc()
+```
+
+
+
 
 Calling the library to measure the execution time  
 ```{r}
@@ -231,16 +491,63 @@ library(tictoc)
 ```
 
 
+```{r}
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db.sqlite")
+dbExecute(mydb, 'DELETE FROM ngrams_count WHERE nb_predicted <= 2 ')
+dbDisconnect(mydb)
+```
+
+This suppresses 11M of rows
+114 sec seen in quite some - origin
+moved to 79 sec after nb_pred inf 2
+after deleting ngrams 68sec
+suppressing inf 3 7 millions 3.7 sec to 2.5 sec. Still too long.  
+next step : killing nb_predinf to 4
+
+Hastag removal
+
+SELECT * FROM ngrams_count WHERE INSTR(predictors,'#') LIMIT 20
+
+```{r}
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db.sqlite")
+dbExecute(mydb, "DELETE FROM ngrams_count WHERE INSTR(predictors,'#') ")
+dbExecute(mydb, "DELETE FROM ngrams_count WHERE INSTR(predicted,'#') ")
+dbDisconnect(mydb)
+```
+
+
+
+
+
 6.44 sec required to find an answer for "in order to" with the n_grams table loaded.
 5.934 sec required with the n_grams table dropped  
 the next step is to suppress records of only 1 occurence  (DELETE FROM ngrams_count WHERE nb_predicted <= 1) gives Updated Rows	27776897.
 Thanks to this suppression the answer is given in 0.7 sec.
-After suppression of n = 2
+
+
+
+When you breathe, I want to be the air for you. I'll be there for you, I'd live and I'd
+
+Guy at my table's wife got up to go to the bathroom and I asked about dessert and he started telling me about his
+
+I'd give anything to see arctic monkeys this
+
+String manipulations  
+
+```{r}
+my_str <- "When you breathe, I want to be the air for you. I'll be there for you, I'd live and I'd"
+Textprocessing(my_str)
+```
+
+
+
+
+
 
 ```{r}
 tic("predicting a word")
 mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db.sqlite")
-dbGetQuery(mydb, 'SELECT * FROM ngrams_count WHERE predictors IN ("seen it in quite some","it in quite some","in quite some","quite some") ORDER BY nb_predicted DESC')
+dbGetQuery(mydb, 'SELECT * FROM ngrams_count WHERE predictors IN ("he started telling me about his","started telling me about his","telling me about his","me about his") ORDER BY nb_predicted DESC')
 dbDisconnect(mydb)
 toc()
 ```

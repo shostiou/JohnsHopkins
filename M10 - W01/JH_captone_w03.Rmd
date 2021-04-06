@@ -228,7 +228,7 @@ If this isn't the cutest thing you've ever seen, then you must be
 
 
 ```{r}
-my_string <- tolower(removePunctuation("Guy at my table's wife got up to go to the bathroom and I asked about dessert and he started telling me about his"))
+my_string <- tolower(removePunctuation("do you have the time"))
 # number of words in the string  
 nb_words <- str_count(my_string,"\\S+")
 word_2=''
@@ -263,10 +263,12 @@ query2g <- paste0("SELECT * FROM bigram_prob WHERE word1 LIKE '", word_1,"' LIMI
 Send the request to the database  
 
 ```{r}
+mydb <- dbConnect(RSQLite::SQLite(), "my-db.sqlite")
 dbGetQuery(mydb, query5g)
 dbGetQuery(mydb, query4g)
 dbGetQuery(mydb, query3g)
 dbGetQuery(mydb, query2g)
+dbDisconnect(mydb)
 ```
 
 
