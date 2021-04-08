@@ -10,7 +10,12 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 In this step, the purpose is to finalize the prediction algorithm and implement a Shiny App to build a prediction of the next 3 words.  
-A stupid backoff approach will be used : starting from 5-gram to 2-gram
+A stupid backoff approach will be used : starting from 4-gram to 2-gram
+
+References :  
+Since good estimates can be made based on smaller models, it is more practical to use bi- or trigram models. This idea that a future event (in this case, the next word) can be predicted using a relatively short history (for the example, one or two words) is called a Markov assumption.  
+
+https://cs.stanford.edu/people/eroberts/courses/soco/projects/2004-05/nlp/techniques_word.html
 
 
 # Libraries
@@ -23,7 +28,173 @@ library(RSQLite)
 library(tictoc)
 library(stringr)
 library(tm)
+library(dplyr)
+library(tidytext)
+library(tidyr)
 ```
+
+
+# Final attemp to build the best n-grams  
+
+Building a hybrid approach of what was done during week2 and 4.  
+Random sampling and sqlite databases will be used to increase the size of the training set (this approach is used to overcome memory limitations).
+
+```{r, echo=FALSE}
+# Building the file directory  
+file_dir <- getwd()
+file_dir <- paste0(file_dir,'/data/final/en_US/')
+# files name to open
+file_name <- c('en_US.blogs.txt','en_US.news.txt','en_US.twitter.txt')
+file_path = paste0(file_dir,file_name)
+
+```
+
+
+```{r}
+text_lines <- list('en_US.blogs.txt' = 0, 'en_US.news.txt' = 0, 'en_US.twitter.txt' = 0)
+```
+
+
+Configuring the execution context
+
+```{r}
+# Setting the seeds
+set.seed(05091810)
+# Getting the nb of lines of each txt files  
+
+# Looping on the list of files
+for (f_name in file_name){
+  # file path  
+  file_path = paste0(file_dir,f_name)
+  # Counting the lines of the raw text
+  text_lines[f_name]  <- countLines(file_path)
+}  
+
+```
+
+EXECUTE ONLY WITH CAUTION
+
+```{r, echo=FALSE,message=FALSE,warning=FALSE, cache=TRUE}
+
+
+# Randomsampling  
+for (steps in 1:20000)
+{  
+
+    # Initiating Empty variables
+    raw_text <- ''
+    en_US_tibble <- tibble(dataset=character(),text=character())
+    
+    # Looping on the list of files
+    for (f_name in file_name){
+    
+      # Temporary Tibble  
+      temp_tibble <- tibble(dataset=character(),text=character())
+      
+      # Counting the lines of the raw text
+      raw_text_lines <- as.numeric(text_lines[f_name])
+      # Creating an index of samples
+      sample_of_lines <- sample(seq(1,raw_text_lines,by = 1), 
+                                size = round(raw_text_lines/100000), replace = F)
+    
+      # Adding to the tibble
+      # A regex is used to remove the file extension. 
+      temp_tibble <- tibble(dataset=sub('\\.txt$', '', f_name),
+                            text=(readLines(file_path)[sample_of_lines]))
+      en_US_tibble <- rbind(en_US_tibble,temp_tibble)
+    
+    } 
+    
+    # Freeing memory by suppressing unnecessary variables
+    rm(temp_tibble)
+
+    # Building bigrams  
+    en_US_bigram <- en_US_tibble %>% 
+    unnest_tokens(bigram,text, token = "ngrams",n=2) %>%
+    count(bigram, sort = TRUE)
+    
+    en_US_bigram <- en_US_bigram %>% 
+    separate(bigram, c("word1","word2"), sep =" ")
+
+    
+    # Building trigrams  
+    en_US_trigram <- en_US_tibble %>% 
+    unnest_tokens(trigram,text, token = "ngrams",n=3) %>%
+    count(trigram, sort = TRUE) %>%
+    na.omit()  
+    
+    en_US_trigram <- en_US_trigram %>% 
+    separate(trigram, c("word1","word2","word3"), sep =" ")
+
+    
+    # Building fourgrams  
+    en_US_fourgram <- en_US_tibble %>% 
+    unnest_tokens(fourgram,text, token = "ngrams",n=4) %>%
+    count(fourgram, sort = TRUE) %>%
+    na.omit()   
+    
+    en_US_fourgram <- en_US_fourgram %>% 
+    separate(fourgram, c("word1","word2","word3","word4"), sep =" ")
+
+    
+    # Inserting data to sqldb  
+    mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db4.sqlite")
+    dbWriteTable(mydb, name="n_grams2", value=en_US_bigram, append=TRUE)
+    dbWriteTable(mydb, name="n_grams3", value=en_US_trigram, append=TRUE)
+    dbWriteTable(mydb, name="n_grams4", value=en_US_fourgram, append=TRUE)
+    dbDisconnect(mydb)
+}
+    
+``` 
+
+
+Building n-grams with probabilities
+
+
+```{r}
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db4.sqlite")
+query <- paste0("SELECT word1, word2, word3, word4, COUNT(*) as nb FROM n_grams4 GROUP BY word1,word2,word3,word4")
+result_df <- dbGetQuery(mydb, query)
+# Building freq table
+result_df <- result_df %>% group_by(word1,word2,word3) %>% mutate(prob_n = nb / sum(nb)) %>% arrange(desc(word1,word2,word3)) %>% select(word1,word2,word3,word4,prob_n)
+dbDisconnect(mydb)
+# Building freq table database
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db_prob.sqlite")
+dbWriteTable(mydb, name="fourgram_prob", value=result_df, append=TRUE)
+dbDisconnect(mydb)
+rm(result_df)
+```
+
+
+```{r}
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db4.sqlite")
+query <- paste0("SELECT * FROM n_grams3")
+result_df <- dbGetQuery(mydb, query)
+# Building freq table
+result_df <- result_df %>% group_by(word1,word2,word3) %>% mutate(prob_n = n / sum(n)) %>% arrange(desc(word1,word2)) %>% select(word1,word2,word3,prob_n)
+dbDisconnect(mydb)
+# Building freq table database
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db_prob.sqlite")
+dbWriteTable(mydb, name="trigram_prob", value=result_df, append=TRUE)
+dbDisconnect(mydb)
+rm(result_df)
+```
+
+
+```{r}
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db4.sqlite")
+query <- paste0("SELECT * FROM n_grams2")
+result_df <- dbGetQuery(mydb, query)
+# Building freq table
+result_df <- result_df %>% group_by(word1,word2) %>% mutate(prob_n = n / sum(n)) %>% arrange(desc(word1)) %>% select(word1,word2,prob_n)
+dbDisconnect(mydb)
+# Building freq table database
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db_prob.sqlite")
+dbWriteTable(mydb, name="bigram_prob", value=result_df, append=TRUE)
+dbDisconnect(mydb)
+rm(result_df)
+```
+
 
 
 # Algorithm prototype
@@ -31,14 +202,109 @@ library(tm)
 String used as an input argument
 
 ```{r}
+# input argument
 my_string <- tolower(removePunctuation("do you have the time"))
-# number of words in the string  
+
+```
+
+This approach relies on a simplified Markov chain rule which embeds 4-grams to 2-grams.  
+As a stupid backoff stategy, we start by checking if a prediction corresponding to 4-grams exists. If, not a new search based on 3-grams is built and so on.
+
+
+```{r}
+
+# tic toc functions used to evaluate performance (response time) 
+tic("predicting a word version 2")
+
+# connecting to database  
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db4.sqlite")
+
+# Counting the number of words in the string
 nb_words <- str_count(my_string,"\\S+")
+word_1=''
 word_2=''
 word_3=''
-word_4=''
-word_5=''
+
+# init of the variable used to check if a result exists
+is_result <- 0
+
+# Looking for 4-grams
+if (nb_words >=3)
+  {
+  # Getting the words  
+  word_1 = word(my_string,-1)
+  word_2 = word(my_string,-2)
+  word_3 = word(my_string,-3)
+  
+  # Building query to the DB  
+  query4g <- paste0("SELECT * FROM fourgram_prob WHERE word3 LIKE '", word_1, 
+                 "' AND word2 LIKE '",word_2,
+                 "' AND word1 LIKE '",word_3,"' LIMIT 3")
+  result <- dbGetQuery(mydb, query4g)
+  
+  # Looking for an empty result
+  is_result <- nrow(result)
+  if (is_result != 0){print(result)} 
+  
+  } 
+
+
+# Looking for 3-grams
+if ((nb_words ==2)| (is_result == 0) )
+  {
+  # Getting the words  
+  word_1 = word(my_string,-1)
+  word_2 = word(my_string,-2)
+
+  # Building query to the DB  
+  query3g <- paste0("SELECT * FROM trigram_prob WHERE word2 LIKE '", word_1, 
+                 "' AND word1 LIKE '",word_2,"' LIMIT 3")
+  result <- dbGetQuery(mydb, query3g)
+  
+  # Looking for an empty result
+  is_result <- nrow(result)
+  if (is_result != 0){print(result)} 
+  
+  } 
+
+# Looking for 2-grams
+if ((nb_words ==1)| (is_result == 0) )
+  {
+  # Getting the words  
+  word_1 = word(my_string,-1)
+
+  # Building query to the DB  
+  query2g <- paste0("SELECT * FROM bigram_prob WHERE word1 LIKE '", word_1,"' LIMIT 3")
+  result <- dbGetQuery(mydb, query2g)
+  
+  # Looking for an empty result
+  is_result <- nrow(result)
+  if (is_result != 0){print(result)} 
+  
+  } 
+
+# disconnecting
+dbDisconnect(mydb)
+toc()
+
+
+
+
+
+
+
 ```
+
+
+
+
+
+
+
+
+
+
+
 
 
 ```{r}
