@@ -1,0 +1,230 @@
+---
+title: "JH_capstone_W06"
+author: "shostiou"
+date: "06/04/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In this step, the purpose is to finalize the prediction algorithm and implement a Shiny App to build a prediction of the next 3 words.  
+A stupid backoff approach will be used : starting from 4-gram to 2-gram
+
+References :  
+Since good estimates can be made based on smaller models, it is more practical to use bi- or trigram models. This idea that a future event (in this case, the next word) can be predicted using a relatively short history (for the example, one or two words) is called a Markov assumption.  
+
+https://cs.stanford.edu/people/eroberts/courses/soco/projects/2004-05/nlp/techniques_word.html
+
+
+# Libraries
+
+```{r, message=FALSE,warning=FALSE}
+library(R.utils)
+library(RSQLite)
+library(tictoc)
+library(stringr)
+library(tm)
+library(dplyr)
+library(tidytext)
+library(tidyr)
+```
+
+
+
+
+# Algorithm prototype
+
+String used as an input argument
+
+```{r}
+# input argument
+my_string <- tolower(removePunctuation("i"))
+
+```
+
+This approach relies on a simplified Markov chain rule which embeds 4-grams to 2-grams.  
+As a stupid backoff stategy, we start by checking if a prediction corresponding to 4-grams exists. If, not a new search based on 3-grams is built and so on.
+
+
+```{r}
+pred_next_word<- function(mystring){
+
+    # tic toc functions used to evaluate performance (response time) 
+    tic("predicting a word version 2")
+    
+    # connecting to database  
+    mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db_prob.sqlite")
+    
+    # Counting the number of words in the string
+    nb_words <- str_count(my_string,"\\S+")
+    word_1=''
+    word_2=''
+    word_3=''
+    
+    # init of the variable used to check if a result exists
+    is_result <- 0
+    
+    # Looking for 4-grams
+    if (nb_words >=3)
+      {
+      # Getting the words  
+      word_1 = word(my_string,-1)
+      word_2 = word(my_string,-2)
+      word_3 = word(my_string,-3)
+      
+      # Building query to the DB  
+      query4g <- paste0("SELECT word4, prob_n FROM fourgram_prob WHERE word3 LIKE '", word_1, 
+                     "' AND word2 LIKE '",word_2,
+                     "' AND word1 LIKE '",word_3,"' ORDER BY prob_n DESC LIMIT 3")
+      result <- dbGetQuery(mydb, query4g)
+      
+      # Looking for an empty result
+      is_result <- nrow(result)
+      # if (is_result != 0){print(result)} 
+      
+      } 
+    
+    
+    # Looking for 3-grams
+    if ( ((nb_words ==2)| (is_result == 0)) & !(nb_words==1))
+      {
+      # Getting the words  
+      word_1 = word(my_string,-1)
+      word_2 = word(my_string,-2)
+    
+      # Building query to the DB  
+      query3g <- paste0("SELECT word3,prob_n FROM trigram_prob WHERE word2 LIKE '", word_1, 
+                     "' AND word1 LIKE '",word_2,"' ORDER BY prob_n DESCLIMIT 3")
+      result <- dbGetQuery(mydb, query3g)
+      
+      # Looking for an empty result
+      is_result <- nrow(result)
+      # if (is_result != 0){print(result)} 
+      
+      } 
+    
+    # Looking for 2-grams
+    if ((nb_words ==1)| (is_result == 0) )
+      {
+      # Getting the words  
+      word_1 = word(my_string,-1)
+    
+      # Building query to the DB  
+      query2g <- paste0("SELECT word2,prob_n FROM bigram_prob WHERE word1 LIKE '", word_1,"' ORDER BY prob_n DESC LIMIT 3")
+      result <- dbGetQuery(mydb, query2g)
+      
+      # Looking for an empty result
+      is_result <- nrow(result)
+      # if (is_result != 0){print(result)} 
+      
+      } 
+    
+    # disconnecting
+      if (is_result != 0)
+        {
+        result1 <- as.character(unlist(as.list(result)[1])[1])
+        prob1 <- as.numeric(unlist(as.list(result)[2])[1])
+        result2 <- as.character(unlist(as.list(result)[1])[2])
+        prob2 <- as.numeric(unlist(as.list(result)[2])[2])
+        result3 <- as.character(unlist(as.list(result)[1])[3])
+        prob3 <- as.numeric(unlist(as.list(result)[2])[3])
+        } 
+    
+    dbDisconnect(mydb)
+    toc()
+    
+    #returning result
+    print(result)
+    return(list(result1,prob1,result2,prob2,result3,prob3))
+    
+    }
+
+```
+
+```{r}
+result1 <- unlist(pred_next_word(my_string))
+```
+```{r}
+result2
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+my_string <- tolower(removePunctuation("you know i love"))
+# number of words in the string  
+nb_words <- str_count(my_string,"\\S+")
+word_2=''
+word_3=''
+word_4=''
+```
+
+
+
+```{r}
+tic('version2')
+mydb <- dbConnect(RSQLite::SQLite(), "my-db.sqlite")
+
+# Extracting last words from the string
+word_1 = word(my_string,-1)
+query2g <- paste0("SELECT * FROM bigram_prob WHERE word1 LIKE '", word_1,"' LIMIT 3")
+dbGetQuery(mydb, query2g)
+
+if (nb_words >=2){word_2 = word(my_string,-2)
+query3g <- paste0("SELECT * FROM trigram_prob WHERE word2 LIKE '", word_1, 
+                 "' AND word1 LIKE '",word_2,"' LIMIT 3")
+dbGetQuery(mydb, query3g)} 
+
+
+if (nb_words >=3){word_3 = word(my_string,-3)
+query4g <- paste0("SELECT * FROM fourgram_prob WHERE word3 LIKE '", word_1, 
+                 "' AND word2 LIKE '",word_2,
+                 "' AND word1 LIKE '",word_3,"' LIMIT 3")
+dbGetQuery(mydb, query4g)}
+
+
+if (nb_words >=4){word_4 = word(my_string,-4)
+query5g <- paste0("SELECT * FROM fivegram_prob WHERE word4 LIKE '", word_1, 
+                 "' AND word3 LIKE '",word_2,
+                 "' AND word2 LIKE '",word_3,
+                 "' AND word1 LIKE '",word_4,"' LIMIT 3")
+# dbGetQuery(mydb, query5g)
+} 
+
+dbDisconnect(mydb)
+toc()
+```
+
+Getting data from the n-grams
+
+```{r}
+
+
+
+
+
+
+
+```
+
+Send the request to the database  
+
+```{r}
+mydb <- dbConnect(RSQLite::SQLite(), "my-db.sqlite")
+
+
+
+
+
+```

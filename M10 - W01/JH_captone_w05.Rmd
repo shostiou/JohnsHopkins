@@ -150,6 +150,7 @@ for (steps in 1:20000)
 
 Building n-grams with probabilities
 
+4-grams
 
 ```{r}
 mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db4.sqlite")
@@ -165,13 +166,14 @@ dbDisconnect(mydb)
 rm(result_df)
 ```
 
+3-grams
 
 ```{r}
 mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db4.sqlite")
-query <- paste0("SELECT * FROM n_grams3")
+query <- paste0("SELECT word1, word2, word3, COUNT(*) as nb FROM n_grams3 GROUP BY word1,word2,word3")
 result_df <- dbGetQuery(mydb, query)
 # Building freq table
-result_df <- result_df %>% group_by(word1,word2,word3) %>% mutate(prob_n = n / sum(n)) %>% arrange(desc(word1,word2)) %>% select(word1,word2,word3,prob_n)
+result_df <- result_df %>% group_by(word1,word2) %>% mutate(prob_n = nb / sum(nb)) %>% arrange(desc(word1,word2)) %>% select(word1,word2,word3,prob_n)
 dbDisconnect(mydb)
 # Building freq table database
 mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db_prob.sqlite")
@@ -180,13 +182,14 @@ dbDisconnect(mydb)
 rm(result_df)
 ```
 
+2-grams
 
 ```{r}
 mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db4.sqlite")
-query <- paste0("SELECT * FROM n_grams2")
+query <- paste0("SELECT word1, word2, COUNT(*) as nb FROM n_grams2 GROUP BY word1,word2")
 result_df <- dbGetQuery(mydb, query)
 # Building freq table
-result_df <- result_df %>% group_by(word1,word2) %>% mutate(prob_n = n / sum(n)) %>% arrange(desc(word1)) %>% select(word1,word2,prob_n)
+result_df <- result_df %>% group_by(word1) %>% mutate(prob_n = nb / sum(nb)) %>% arrange(desc(word1)) %>% select(word1,word2,prob_n)
 dbDisconnect(mydb)
 # Building freq table database
 mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db_prob.sqlite")
@@ -217,7 +220,7 @@ As a stupid backoff stategy, we start by checking if a prediction corresponding 
 tic("predicting a word version 2")
 
 # connecting to database  
-mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db4.sqlite")
+mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db_prob.sqlite")
 
 # Counting the number of words in the string
 nb_words <- str_count(my_string,"\\S+")
@@ -239,7 +242,7 @@ if (nb_words >=3)
   # Building query to the DB  
   query4g <- paste0("SELECT * FROM fourgram_prob WHERE word3 LIKE '", word_1, 
                  "' AND word2 LIKE '",word_2,
-                 "' AND word1 LIKE '",word_3,"' LIMIT 3")
+                 "' AND word1 LIKE '",word_3,"' ORDER BY prob_n DESC LIMIT 3")
   result <- dbGetQuery(mydb, query4g)
   
   # Looking for an empty result
@@ -258,7 +261,7 @@ if ((nb_words ==2)| (is_result == 0) )
 
   # Building query to the DB  
   query3g <- paste0("SELECT * FROM trigram_prob WHERE word2 LIKE '", word_1, 
-                 "' AND word1 LIKE '",word_2,"' LIMIT 3")
+                 "' AND word1 LIKE '",word_2,"' ORDER BY prob_n DESCLIMIT 3")
   result <- dbGetQuery(mydb, query3g)
   
   # Looking for an empty result
@@ -274,7 +277,7 @@ if ((nb_words ==1)| (is_result == 0) )
   word_1 = word(my_string,-1)
 
   # Building query to the DB  
-  query2g <- paste0("SELECT * FROM bigram_prob WHERE word1 LIKE '", word_1,"' LIMIT 3")
+  query2g <- paste0("SELECT * FROM bigram_prob WHERE word1 LIKE '", word_1,"' ORDER BY prob_n DESCLIMIT 3")
   result <- dbGetQuery(mydb, query2g)
   
   # Looking for an empty result
