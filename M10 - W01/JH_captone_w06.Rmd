@@ -52,7 +52,7 @@ As a stupid backoff stategy, we start by checking if a prediction corresponding 
 pred_next_word<- function(mystring){
 
     # tic toc functions used to evaluate performance (response time) 
-    tic("predicting a word version 2")
+    # tic("predicting a word version 2")
     
     # connecting to database  
     mydb <- dbConnect(RSQLite::SQLite(), "ngrams_db_prob.sqlite")
@@ -133,10 +133,10 @@ pred_next_word<- function(mystring){
         } 
     
     dbDisconnect(mydb)
-    toc()
+    # toc()
     
     #returning result
-    print(result)
+    # print(result)
     return(list(result1,prob1,result2,prob2,result3,prob3))
     
     }
@@ -144,7 +144,8 @@ pred_next_word<- function(mystring){
 ```
 
 ```{r}
-result1 <- unlist(pred_next_word(my_string))
+result1 <- unlist(pred_next_word(my_string))[1] 
+result1
 ```
 ```{r}
 result2
